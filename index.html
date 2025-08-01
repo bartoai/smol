@@ -42,6 +42,25 @@
             height: 100%;
         }
         
+        /* Attempt to hide Spline branding */
+        spline-viewer::part(logo) {
+            display: none !important;
+        }
+        
+        spline-viewer::part(watermark) {
+            display: none !important;
+        }
+        
+        /* Hide potential branding containers */
+        spline-viewer div[class*="logo"],
+        spline-viewer div[class*="brand"],
+        spline-viewer div[class*="watermark"],
+        spline-viewer a[href*="spline"] {
+            display: none !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
+        }
+        
         #forest-logo {
             position: absolute;
             top: 50%;
@@ -321,6 +340,9 @@
                 if (forestLogo) {
                     forestLogo.classList.add('visible');
                 }
+                
+                // Try to hide Spline branding
+                hideSplineBranding();
             }, 3000);
             
             // Start camera movement and fade out after 7 seconds
@@ -788,6 +810,80 @@
             }
             
             requestAnimationFrame(swoopStep);
+        }
+        
+        function hideSplineBranding() {
+            // Multiple attempts to hide Spline branding
+            const attempts = [
+                () => {
+                    // Try to access shadow DOM
+                    const splineViewer = document.querySelector('spline-viewer');
+                    if (splineViewer && splineViewer.shadowRoot) {
+                        const shadowElements = splineViewer.shadowRoot.querySelectorAll('*');
+                        shadowElements.forEach(el => {
+                            if (el.textContent && el.textContent.toLowerCase().includes('built') ||
+                                el.textContent && el.textContent.toLowerCase().includes('spline') ||
+                                el.href && el.href.includes('spline.design')) {
+                                el.style.display = 'none';
+                                el.style.opacity = '0';
+                                el.style.visibility = 'hidden';
+                            }
+                        });
+                    }
+                },
+                () => {
+                    // Hide by common class patterns
+                    const selectors = [
+                        '[class*="logo"]',
+                        '[class*="brand"]', 
+                        '[class*="watermark"]',
+                        '[class*="spline"]',
+                        'a[href*="spline"]',
+                        'div[style*="position: absolute"][style*="bottom"]',
+                        'div[style*="position: fixed"][style*="bottom"]'
+                    ];
+                    
+                    selectors.forEach(selector => {
+                        document.querySelectorAll(selector).forEach(el => {
+                            if (el.textContent && (el.textContent.includes('Built') || el.textContent.includes('Spline'))) {
+                                el.style.display = 'none !important';
+                                el.remove();
+                            }
+                        });
+                    });
+                },
+                () => {
+                    // Brute force: hide all elements in bottom-right area that might be branding
+                    document.querySelectorAll('*').forEach(el => {
+                        const style = window.getComputedStyle(el);
+                        const rect = el.getBoundingClientRect();
+                        
+                        if (style.position === 'absolute' || style.position === 'fixed') {
+                            if (rect.bottom > window.innerHeight - 100 && rect.right > window.innerWidth - 200) {
+                                if (el.textContent && (el.textContent.includes('Built') || el.textContent.includes('Spline'))) {
+                                    el.style.display = 'none';
+                                    el.remove();
+                                }
+                            }
+                        }
+                    });
+                }
+            ];
+            
+            // Run all attempts with delays
+            attempts.forEach((attempt, index) => {
+                setTimeout(attempt, index * 1000);
+            });
+            
+            // Keep trying periodically
+            const interval = setInterval(() => {
+                attempts.forEach(attempt => attempt());
+            }, 2000);
+            
+            // Stop trying after forest scene ends
+            setTimeout(() => {
+                clearInterval(interval);
+            }, 7000);
         }
         
         function animate() {
