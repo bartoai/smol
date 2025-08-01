@@ -42,6 +42,30 @@
             height: 100%;
         }
         
+        /* Hide Spline branding */
+        spline-viewer::part(default-ui) {
+            display: none !important;
+        }
+        
+        #forest-logo {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0;
+            z-index: 101;
+            transition: opacity 2s ease-in-out;
+        }
+        
+        #forest-logo.visible {
+            opacity: 1;
+        }
+        
+        #forest-logo img {
+            max-width: 400px;
+            height: auto;
+        }
+        
         #terrarium-container {
             position: relative;
             width: 100vw;
@@ -235,6 +259,10 @@
     <div id="forest-scene">
         <script type="module" src="https://unpkg.com/@splinetool/viewer@1.10.38/build/spline-viewer.js"></script>
         <spline-viewer url="https://prod.spline.design/AiYYZCmz1h5o0V8H/scene.splinecode"></spline-viewer>
+        
+        <div id="forest-logo">
+            <img src="https://cdn.prod.website-files.com/6740d85c4e3daeef29a89470/688c2456e4b0265ec1acb155_maddie-s-world-01-08-2025.png" alt="Maddie's World">
+        </div>
     </div>
     
     <!-- Terrarium Container -->
@@ -273,6 +301,24 @@
         let recognition;
         let splineViewer;
         let journeyStarted = false;
+        let musicStarted = false;
+        
+        // Start music on any click
+        document.addEventListener('click', startMusicOnClick);
+        
+        function startMusicOnClick() {
+            if (!musicStarted) {
+                musicStarted = true;
+                // Start ambient music for the journey
+                ambientMusic = new Audio('https://cdn.jsdelivr.net/gh/bartoai/smol@main/fable.mp3');
+                ambientMusic.loop = true;
+                ambientMusic.volume = 0.05;
+                ambientMusic.play().catch(e => console.log('Music autoplay blocked'));
+                
+                // Remove the click listener after first click
+                document.removeEventListener('click', startMusicOnClick);
+            }
+        }
         
         // Custom cursor
         document.addEventListener('mousemove', (e) => {
@@ -294,23 +340,61 @@
                 forestScene.classList.add('visible');
             }, 500);
             
+            // Fade in the logo after forest appears
+            setTimeout(() => {
+                const forestLogo = document.getElementById('forest-logo');
+                forestLogo.classList.add('visible');
+            }, 3000);
+            
             // Wait for scene to load, then start camera movement
             setTimeout(() => {
                 splineViewer = document.querySelector('spline-viewer');
                 if (splineViewer) {
+                    // Try to hide Spline UI elements
+                    hidSplineBranding();
                     // Start moving through the forest
                     animateForestWalk();
                 }
             }, 4000);
         }
         
+        function hidSplineBranding() {
+            // Try multiple methods to hide Spline branding
+            setTimeout(() => {
+                try {
+                    // Hide via shadow DOM if accessible
+                    const splineElements = document.querySelectorAll('spline-viewer');
+                    splineElements.forEach(viewer => {
+                        if (viewer.shadowRoot) {
+                            const brandingElements = viewer.shadowRoot.querySelectorAll('[class*="logo"], [class*="brand"], [class*="spline"]');
+                            brandingElements.forEach(el => el.style.display = 'none');
+                        }
+                    });
+                    
+                    // Hide via CSS if elements are in normal DOM
+                    const brandingSelectors = [
+                        '[class*="spline"]',
+                        '[class*="logo"]', 
+                        '[class*="brand"]',
+                        'a[href*="spline"]'
+                    ];
+                    
+                    brandingSelectors.forEach(selector => {
+                        const elements = document.querySelectorAll(selector);
+                        elements.forEach(el => {
+                            if (el.textContent.toLowerCase().includes('spline') || 
+                                el.textContent.toLowerCase().includes('built')) {
+                                el.style.display = 'none';
+                            }
+                        });
+                    });
+                } catch (error) {
+                    console.log('Could not hide Spline branding');
+                }
+            }, 2000);
+        }
+        
         function animateForestWalk() {
-            // Start ambient music for the journey
-            ambientMusic = new Audio('https://cdn.jsdelivr.net/gh/bartoai/smol@main/fable.mp3');
-            ambientMusic.loop = true;
-            ambientMusic.volume = 0.05;
-            ambientMusic.play().catch(e => console.log('Music autoplay blocked'));
-            
             // Get the spline viewer and control camera movement
             splineViewer = document.querySelector('spline-viewer');
             
@@ -374,14 +458,13 @@
             const terrariumContainer = document.getElementById('terrarium-container');
             terrariumContainer.classList.add('visible');
             
-            // Increase music volume slightly for terrarium world
-            if (ambientMusic) {
+            // Increase music volume slightly for terrarium world if music is playing
+            if (ambientMusic && musicStarted) {
                 ambientMusic.volume = 0.1;
             }
             
             // Automatically start the 3D terrarium experience
             setTimeout(() => {
-                document.getElementById('loading').style.display = 'block';
                 init();
             }, 500);
         }
@@ -706,19 +789,15 @@
                     isLoading = false;
                     
                     setTimeout(() => {
-                        document.getElementById('loading').style.display = 'none';
                         animateCameraSwoop();
                     }, 1000);
                 },
                 function(progress) {
-                    if (progress.total > 0) {
-                        const percentage = (progress.loaded / progress.total * 100).toFixed(1);
-                        document.getElementById('loading').innerHTML = `Awakening the terrarium... ${percentage}%`;
-                    }
+                    // Silent loading - no progress text
                 },
                 function(error) {
                     console.error('Error loading model:', error);
-                    document.getElementById('loading').innerHTML = 'The terrarium remains elusive...';
+                    // Silent error handling
                 }
             );
         }
