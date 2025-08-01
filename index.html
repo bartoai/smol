@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Model Viewer</title>
+    <link rel="icon" href="data:,">
     <style>
         body {
             margin: 0;
@@ -163,13 +163,13 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.shadowMap.enabled = true;
             renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-            renderer.gammaOutput = true;
-            renderer.gammaFactor = 2.2;
+            renderer.outputEncoding = THREE.sRGBEncoding;
             document.getElementById('container').appendChild(renderer.domElement);
             
             // Controls setup
             controls = new THREE.OrbitControls(camera, renderer.domElement);
-            controls.target.set(1.43, 1.1, 2.05);
+            controls.target.set(0, 0, 0); // Start looking at origin
+            controls.enabled = false; // Disable during animation
             controls.enableDamping = true;
             controls.dampingFactor = 0.05;
             controls.screenSpacePanning = false;
@@ -241,21 +241,76 @@
                     });
                     
                     scene.add(model);
-                    document.getElementById('loading').style.display = 'none';
                     isLoading = false;
                     
-                    // Focus camera on model
-                    controls.target.copy(center);
-                    controls.update();
+                    // Small delay to ensure model is fully rendered before starting animation
+                    setTimeout(() => {
+                        document.getElementById('loading').style.display = 'none';
+                        animateCameraSwoop();
+                    }, 500);
+                    
+                    // Focus camera on model (this will be the end target)
+                    // controls.target.copy(center);
+                    // controls.update();
                 },
                 function(progress) {
-                    console.log('Loading progress:', (progress.loaded / progress.total * 100) + '%');
+                    if (progress.total > 0) {
+                        const percentage = (progress.loaded / progress.total * 100).toFixed(1);
+                        console.log('Loading progress:', percentage + '%');
+                        document.getElementById('loading').innerHTML = `Loading 3D Model... ${percentage}%`;
+                    }
                 },
                 function(error) {
                     console.error('Error loading model:', error);
                     document.getElementById('loading').innerHTML = 'Error loading model. Please check the file path.';
                 }
             );
+        }
+        
+        function animateCameraSwoop() {
+            console.log('Starting camera swoop animation...');
+            
+            const startPos = { x: camera.position.x, y: camera.position.y, z: camera.position.z };
+            const startTarget = { x: controls.target.x, y: controls.target.y, z: controls.target.z };
+            
+            const endPos = { x: 1.87, y: 1.28, z: 2.93 };
+            const endTarget = { x: 1.43, y: 1.1, z: 2.05 };
+            
+            const duration = 3000; // 3 seconds
+            const startTime = performance.now();
+            
+            function easeInOutCubic(t) {
+                return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+            }
+            
+            function swoopStep(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const easedProgress = easeInOutCubic(progress);
+                
+                // Interpolate camera position with a slight arc
+                const arcHeight = Math.sin(progress * Math.PI) * 1.5; // Creates an arc
+                camera.position.x = startPos.x + (endPos.x - startPos.x) * easedProgress;
+                camera.position.y = startPos.y + (endPos.y - startPos.y) * easedProgress + arcHeight;
+                camera.position.z = startPos.z + (endPos.z - startPos.z) * easedProgress;
+                
+                // Interpolate target
+                controls.target.x = startTarget.x + (endTarget.x - startTarget.x) * easedProgress;
+                controls.target.y = startTarget.y + (endTarget.y - startTarget.y) * easedProgress;
+                controls.target.z = startTarget.z + (endTarget.z - startTarget.z) * easedProgress;
+                
+                controls.update();
+                
+                if (progress < 1) {
+                    requestAnimationFrame(swoopStep);
+                } else {
+                    // Animation complete, enable controls
+                    controls.enabled = true;
+                    console.log('Camera swoop animation complete!');
+                }
+            }
+            
+            requestAnimationFrame(swoopStep);
         }
         
         function animate() {
