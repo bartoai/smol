@@ -5,78 +5,38 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>3D Model Viewer</title>
     <style>
-        * {
+        body {
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Arial', sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Arial', sans-serif;
             overflow: hidden;
-            height: 100vh;
         }
-
+        
         #container {
+            position: relative;
             width: 100vw;
             height: 100vh;
-            position: relative;
         }
-
-        #loading {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: white;
-            font-size: 18px;
-            z-index: 1000;
-            text-align: center;
-        }
-
-        .loading-spinner {
-            border: 3px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top: 3px solid white;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        #controls {
+        
+        #stats {
             position: absolute;
             top: 20px;
             left: 20px;
-            background: rgba(0, 0, 0, 0.7);
-            color: white;
+            background: rgba(0, 0, 0, 0.8);
+            color: #00ff88;
             padding: 15px;
             border-radius: 10px;
+            font-family: 'Courier New', monospace;
             font-size: 14px;
-            z-index: 100;
+            line-height: 1.4;
             backdrop-filter: blur(10px);
-        }
-
-        #info {
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-            background: rgba(0, 0, 0, 0.7);
-            color: white;
-            padding: 15px;
-            border-radius: 10px;
-            font-size: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
             z-index: 100;
-            backdrop-filter: blur(10px);
+            min-width: 280px;
         }
-
-        #camera-controls {
+        
+        #controls {
             position: absolute;
             top: 20px;
             right: 20px;
@@ -84,95 +44,98 @@
             color: white;
             padding: 15px;
             border-radius: 10px;
-            font-size: 12px;
-            z-index: 100;
             backdrop-filter: blur(10px);
-            min-width: 200px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 100;
+        }
+        
+        .control-group {
+            margin-bottom: 10px;
+        }
+        
+        .control-group label {
             display: block;
+            margin-bottom: 5px;
+            font-size: 12px;
+            color: #ccc;
         }
-
-        .preset-btn {
-            background: rgba(255, 255, 255, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            color: white;
-            padding: 8px 12px;
-            margin: 2px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 11px;
-            transition: all 0.3s ease;
+        
+        .control-group input {
+            width: 100%;
+            margin-bottom: 5px;
         }
-
-        .preset-btn:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: translateY(-1px);
-        }
-
-        .coord-display {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 8px;
-            border-radius: 5px;
-            margin: 5px 0;
-            font-family: monospace;
-            font-size: 10px;
-        }
-
-        .save-btn {
-            background: #4CAF50;
+        
+        button {
+            background: #00ff88;
+            color: black;
             border: none;
-            color: white;
-            padding: 8px 16px;
+            padding: 8px 12px;
             border-radius: 5px;
             cursor: pointer;
-            font-size: 11px;
-            margin: 5px 0;
+            font-weight: bold;
+            margin: 2px;
         }
-
-        .save-btn:hover {
-            background: #45a049;
+        
+        button:hover {
+            background: #00cc6a;
         }
-
-        canvas {
-            display: block;
+        
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 18px;
+            z-index: 200;
+        }
+        
+        .stat-value {
+            color: #00ff88;
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
     <div id="container">
-        <div id="loading">
-            <div class="loading-spinner"></div>
-            <div>Loading 3D Model...</div>
-        <div id="info">
-            <strong>Smol Ame Terrarium</strong><br>
-            3D Model Viewer<br>
-            <small>Use camera helper to find perfect angles!</small>
+        <div id="loading">Loading 3D Model...</div>
+        
+        <div id="stats">
+            <div><strong>Camera Position:</strong></div>
+            <div>X: <span id="posX" class="stat-value">0</span></div>
+            <div>Y: <span id="posY" class="stat-value">0</span></div>
+            <div>Z: <span id="posZ" class="stat-value">0</span></div>
+            <br>
+            <div><strong>Camera Rotation:</strong></div>
+            <div>X: <span id="rotX" class="stat-value">0</span>°</div>
+            <div>Y: <span id="rotY" class="stat-value">0</span>°</div>
+            <div>Z: <span id="rotZ" class="stat-value">0</span>°</div>
+            <br>
+            <div><strong>Target:</strong></div>
+            <div>X: <span id="targetX" class="stat-value">0</span></div>
+            <div>Y: <span id="targetY" class="stat-value">0</span></div>
+            <div>Z: <span id="targetZ" class="stat-value">0</span></div>
+            <br>
+            <div><strong>Distance:</strong> <span id="distance" class="stat-value">0</span></div>
         </div>
         
         <div id="controls">
-            <strong>Controls:</strong><br>
-            🖱️ Left Click + Drag: Rotate<br>
-            🖱️ Right Click + Drag: Pan<br>
-            🎡 Mouse Wheel: Zoom
-        </div>
-
-        <div id="camera-controls">
-            <strong>📹 Camera Helper</strong><br><br>
-            
-            <div class="coord-display" id="current-pos">
-                Position: (0, 0, 0)<br>
-                Target: (0, 0, 0)
+            <div class="control-group">
+                <button onclick="resetCamera()">Reset Camera</button>
+                <button onclick="copySettings()">Copy Settings</button>
             </div>
-            
-            <button class="save-btn" onclick="saveCameraPosition()">💾 Save Current View</button>
-            
-            <div style="margin: 10px 0;"><strong>Quick Presets:</strong></div>
-            <button class="preset-btn" onclick="animateToPosition(5, 5, 5, 0, 0, 0)">Default View</button>
-            <button class="preset-btn" onclick="animateToPosition(8, 2, 0, 0, 0, 0)">Side View</button>
-            <button class="preset-btn" onclick="animateToPosition(0, 8, 0, 0, 0, 0)">Top View</button>
-            <button class="preset-btn" onclick="animateToPosition(3, 3, 8, 0, 0, 0)">Close Front</button>
-            
-            <div style="margin: 10px 0;"><strong>Saved Positions:</strong></div>
-            <div id="saved-positions"></div>
+            <div class="control-group">
+                <label>Model Scale:</label>
+                <input type="range" id="scaleSlider" min="0.1" max="3" step="0.1" value="1">
+                <span id="scaleValue">1.0</span>
+            </div>
+            <div class="control-group">
+                <label>Auto Rotate:</label>
+                <input type="checkbox" id="autoRotate">
+            </div>
+            <div class="control-group">
+                <button onclick="exportPosition()">Export JSON</button>
+            </div>
         </div>
     </div>
 
@@ -182,199 +145,226 @@
 
     <script>
         let scene, camera, renderer, controls, model;
-        let container = document.getElementById('container');
-        let loading = document.getElementById('loading');
-        let savedPositions = [];
-
+        let isLoading = true;
+        
+        // Initialize the 3D scene
         function init() {
             // Scene setup
             scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x2c3e50);
-
+            scene.background = new THREE.Color(0x222222);
+            
             // Camera setup
             camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
             camera.position.set(5, 5, 5);
-
+            
             // Renderer setup
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.shadowMap.enabled = true;
             renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-            renderer.outputEncoding = THREE.sRGBEncoding;
-            renderer.toneMapping = THREE.ACESFilmicToneMapping;
-            renderer.toneMappingExposure = 1.2;
-            container.appendChild(renderer.domElement);
-
+            renderer.gammaOutput = true;
+            renderer.gammaFactor = 2.2;
+            document.getElementById('container').appendChild(renderer.domElement);
+            
             // Controls setup
             controls = new THREE.OrbitControls(camera, renderer.domElement);
             controls.enableDamping = true;
             controls.dampingFactor = 0.05;
-            controls.maxDistance = 20;
+            controls.screenSpacePanning = false;
             controls.minDistance = 1;
-
-            // Update camera position display when controls change
-            controls.addEventListener('change', updateCameraDisplay);
-
+            controls.maxDistance = 100;
+            
             // Lighting setup
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
             scene.add(ambientLight);
-
+            
             const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
             directionalLight.position.set(10, 10, 5);
             directionalLight.castShadow = true;
             directionalLight.shadow.mapSize.width = 2048;
             directionalLight.shadow.mapSize.height = 2048;
             scene.add(directionalLight);
-
-            const pointLight = new THREE.PointLight(0x00ff88, 0.5, 10);
-            pointLight.position.set(-5, 3, -5);
+            
+            const pointLight = new THREE.PointLight(0xffffff, 0.5);
+            pointLight.position.set(-10, 10, -10);
             scene.add(pointLight);
-
-            // Load the GLB model
+            
+            // Load the 3D model
             loadModel();
-
-            // Handle window resize
-            window.addEventListener('resize', onWindowResize, false);
-        }
-
-        function updateCameraDisplay() {
-            const pos = camera.position;
-            const target = controls.target;
-            document.getElementById('current-pos').innerHTML = 
-                `Position: (${pos.x.toFixed(2)}, ${pos.y.toFixed(2)}, ${pos.z.toFixed(2)})<br>` +
-                `Target: (${target.x.toFixed(2)}, ${target.y.toFixed(2)}, ${target.z.toFixed(2)})`;
-        }
-
-        function saveCameraPosition() {
-            const pos = camera.position.clone();
-            const target = controls.target.clone();
-            const name = prompt("Name this camera position:", `View ${savedPositions.length + 1}`);
             
-            if (name) {
-                savedPositions.push({ name, pos, target });
-                updateSavedPositionsList();
-            }
+            // Event listeners
+            window.addEventListener('resize', onWindowResize);
+            document.getElementById('scaleSlider').addEventListener('input', updateScale);
+            document.getElementById('autoRotate').addEventListener('change', toggleAutoRotate);
+            
+            // Start render loop
+            animate();
         }
-
-        function updateSavedPositionsList() {
-            const container = document.getElementById('saved-positions');
-            container.innerHTML = '';
-            
-            savedPositions.forEach((saved, index) => {
-                const btn = document.createElement('button');
-                btn.className = 'preset-btn';
-                btn.innerHTML = `${saved.name} <small>✕</small>`;
-                btn.onclick = () => animateToPosition(
-                    saved.pos.x, saved.pos.y, saved.pos.z,
-                    saved.target.x, saved.target.y, saved.target.z
-                );
-                
-                // Add delete functionality
-                btn.oncontextmenu = (e) => {
-                    e.preventDefault();
-                    savedPositions.splice(index, 1);
-                    updateSavedPositionsList();
-                };
-                
-                container.appendChild(btn);
-            });
-        }
-
-        function animateToPosition(x, y, z, targetX = 0, targetY = 0, targetZ = 0, duration = 2000) {
-            const startPos = camera.position.clone();
-            const startTarget = controls.target.clone();
-            const endPos = new THREE.Vector3(x, y, z);
-            const endTarget = new THREE.Vector3(targetX, targetY, targetZ);
-            
-            const startTime = Date.now();
-            
-            function animateStep() {
-                const elapsed = Date.now() - startTime;
-                const progress = Math.min(elapsed / duration, 1);
-                
-                // Smooth easing function
-                const easeProgress = 1 - Math.pow(1 - progress, 3);
-                
-                // Interpolate position
-                camera.position.lerpVectors(startPos, endPos, easeProgress);
-                controls.target.lerpVectors(startTarget, endTarget, easeProgress);
-                
-                controls.update();
-                updateCameraDisplay();
-                
-                if (progress < 1) {
-                    requestAnimationFrame(animateStep);
-                }
-            }
-            
-            animateStep();
-        }
-
+        
         function loadModel() {
             const loader = new THREE.GLTFLoader();
-            
-            // Load from the GitHub raw URL
-            const modelUrl = 'https://raw.githubusercontent.com/bartoai/smol/main/smol_ame_in_an_upcycled_terrarium_hololiveen.glb';
+            const modelUrl = 'https://github.com/bartoai/smol/raw/main/smol_ame_in_an_upcycled_terrarium_hololiveen.glb';
             
             loader.load(
                 modelUrl,
                 function(gltf) {
                     model = gltf.scene;
                     
-                    // Enable shadows
-                    model.traverse(function(node) {
-                        if (node.isMesh) {
-                            node.castShadow = true;
-                            node.receiveShadow = true;
-                        }
-                    });
-
                     // Center and scale the model
                     const box = new THREE.Box3().setFromObject(model);
                     const center = box.getCenter(new THREE.Vector3());
                     const size = box.getSize(new THREE.Vector3());
                     
+                    model.position.x = -center.x;
+                    model.position.y = -center.y;
+                    model.position.z = -center.z;
+                    
+                    // Scale to fit in view
                     const maxDim = Math.max(size.x, size.y, size.z);
                     const scale = 3 / maxDim;
                     model.scale.setScalar(scale);
                     
-                    model.position.sub(center.multiplyScalar(scale));
+                    // Enable shadows
+                    model.traverse((child) => {
+                        if (child.isMesh) {
+                            child.castShadow = true;
+                            child.receiveShadow = true;
+                        }
+                    });
                     
                     scene.add(model);
+                    document.getElementById('loading').style.display = 'none';
+                    isLoading = false;
                     
-                    // Hide loading screen and update camera display
-                    loading.style.display = 'none';
-                    updateCameraDisplay();
-                    
-                    // Start animation loop
-                    animate();
+                    // Focus camera on model
+                    controls.target.copy(center);
+                    controls.update();
                 },
                 function(progress) {
-                    console.log('Loading progress: ', (progress.loaded / progress.total * 100) + '%');
+                    console.log('Loading progress:', (progress.loaded / progress.total * 100) + '%');
                 },
                 function(error) {
                     console.error('Error loading model:', error);
-                    loading.innerHTML = '<div style="color: #ff6b6b;">Failed to load 3D model.<br>Please check the file path.</div>';
+                    document.getElementById('loading').innerHTML = 'Error loading model. Please check the file path.';
                 }
             );
         }
-
+        
         function animate() {
             requestAnimationFrame(animate);
             
             controls.update();
             
-            // Removed auto-rotation - model stays still now
+            if (!isLoading) {
+                updateStats();
+            }
             
             renderer.render(scene, camera);
         }
-
+        
+        function updateStats() {
+            // Camera position
+            document.getElementById('posX').textContent = camera.position.x.toFixed(2);
+            document.getElementById('posY').textContent = camera.position.y.toFixed(2);
+            document.getElementById('posZ').textContent = camera.position.z.toFixed(2);
+            
+            // Camera rotation (convert from radians to degrees)
+            document.getElementById('rotX').textContent = (camera.rotation.x * 180 / Math.PI).toFixed(1);
+            document.getElementById('rotY').textContent = (camera.rotation.y * 180 / Math.PI).toFixed(1);
+            document.getElementById('rotZ').textContent = (camera.rotation.z * 180 / Math.PI).toFixed(1);
+            
+            // Target position
+            document.getElementById('targetX').textContent = controls.target.x.toFixed(2);
+            document.getElementById('targetY').textContent = controls.target.y.toFixed(2);
+            document.getElementById('targetZ').textContent = controls.target.z.toFixed(2);
+            
+            // Distance from target
+            const distance = camera.position.distanceTo(controls.target);
+            document.getElementById('distance').textContent = distance.toFixed(2);
+        }
+        
+        function resetCamera() {
+            camera.position.set(5, 5, 5);
+            controls.target.set(0, 0, 0);
+            controls.update();
+        }
+        
+        function copySettings() {
+            const settings = {
+                position: {
+                    x: parseFloat(camera.position.x.toFixed(2)),
+                    y: parseFloat(camera.position.y.toFixed(2)),
+                    z: parseFloat(camera.position.z.toFixed(2))
+                },
+                target: {
+                    x: parseFloat(controls.target.x.toFixed(2)),
+                    y: parseFloat(controls.target.y.toFixed(2)),
+                    z: parseFloat(controls.target.z.toFixed(2))
+                },
+                distance: parseFloat(camera.position.distanceTo(controls.target).toFixed(2))
+            };
+            
+            navigator.clipboard.writeText(JSON.stringify(settings, null, 2)).then(() => {
+                alert('Camera settings copied to clipboard!');
+            });
+        }
+        
+        function updateScale() {
+            const scale = parseFloat(document.getElementById('scaleSlider').value);
+            document.getElementById('scaleValue').textContent = scale.toFixed(1);
+            
+            if (model) {
+                model.scale.setScalar(scale);
+            }
+        }
+        
+        function toggleAutoRotate() {
+            controls.autoRotate = document.getElementById('autoRotate').checked;
+            controls.autoRotateSpeed = 2.0;
+        }
+        
+        function exportPosition() {
+            const settings = {
+                camera: {
+                    position: {
+                        x: parseFloat(camera.position.x.toFixed(2)),
+                        y: parseFloat(camera.position.y.toFixed(2)),
+                        z: parseFloat(camera.position.z.toFixed(2))
+                    },
+                    rotation: {
+                        x: parseFloat((camera.rotation.x * 180 / Math.PI).toFixed(1)),
+                        y: parseFloat((camera.rotation.y * 180 / Math.PI).toFixed(1)),
+                        z: parseFloat((camera.rotation.z * 180 / Math.PI).toFixed(1))
+                    }
+                },
+                controls: {
+                    target: {
+                        x: parseFloat(controls.target.x.toFixed(2)),
+                        y: parseFloat(controls.target.y.toFixed(2)),
+                        z: parseFloat(controls.target.z.toFixed(2))
+                    },
+                    distance: parseFloat(camera.position.distanceTo(controls.target).toFixed(2))
+                },
+                model: {
+                    scale: parseFloat(document.getElementById('scaleSlider').value)
+                }
+            };
+            
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(settings, null, 2));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", "camera_settings.json");
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        }
+        
         function onWindowResize() {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
         }
-
+        
         // Initialize the scene
         init();
     </script>
