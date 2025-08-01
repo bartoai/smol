@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Forgotten Terrarium</title>
+    <title>TerrAInum - Maddie's World</title>
     <link rel="icon" href="data:,">
     <style>
         @font-face {
@@ -15,8 +15,8 @@
         body {
             margin: 0;
             padding: 0;
-            background: radial-gradient(circle at center, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
-            font-family: 'Kings', 'Crimson Text', serif;
+            background: radial-gradient(circle at center, #2a2a3e 0%, #1e1e2e 50%, #181828 70%, #0a0a0f 100%);
+            font-family: 'Kings', serif;
             overflow: hidden;
             cursor: none;
         }
@@ -43,21 +43,113 @@
         
         #story-content {
             text-align: center;
-            color: #e8e8e8;
         }
         
         #story-text {
-            font-size: 1.8em;
-            font-weight: 400;
-            color: #d4af37;
-            text-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
+            opacity: 0;
+            animation: fadeIn 2s ease-in-out forwards;
             margin-bottom: 40px;
         }
         
-        .word {
+        #story-text img {
+            max-width: 500px;
+            height: auto;
+        }
+        
+        #enter-btn {
+            background: none;
+            border: none;
+            padding: 0;
+            cursor: pointer;
             opacity: 0;
-            display: inline-block;
-            margin-right: 0.2em;
+            animation: fadeIn 1s ease-in-out 3s forwards, slowFlash 2s ease-in-out infinite 4s;
+        }
+        
+        #enter-btn img {
+            max-width: 200px;
+            height: auto;
+            transition: transform 0.3s ease;
+        }
+        
+        #enter-btn:hover img {
+            transform: scale(1.05);
+        }
+        
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+        
+        @keyframes slowFlash {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #d4af37;
+            font-size: 1.2em;
+            z-index: 150;
+            display: none;
+        }
+        
+        #ambient-text {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.9em;
+            z-index: 100;
+            opacity: 0;
+            transition: opacity 2s ease;
+        }
+        
+        #chat-interface {
+            position: absolute;
+            bottom: 30px;
+            left: 30px;
+            width: 350px;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            z-index: 100;
+            opacity: 0;
+            transition: opacity 2s ease 3s;
+        }
+        
+        #chat-messages {
+            height: 150px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 5px;
+            font-size: 0.9em;
+            line-height: 1.4;
+        }
+        
+        .message {
+            margin-bottom: 10px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            max-width: 80%;
+        }
+        
+        .user-message {
+            background: rgba(212, 175, 55, 0.2);
+            color: #d4af37;
+            margin-left: auto;
+            text-align: right;
+        }
+        
+        .maddie-message {
+            background: rgba(255, 255, 255, 0.1);
+            color: #e8e8e8;
         }
         
         .typing-text {
@@ -70,67 +162,30 @@
             51%, 100% { border-color: #d4af37; }
         }
         
-        #enter-btn {
-            background: none;
-            color: #d4af37;
-            border: none;
-            padding: 0;
-            font-size: 1.1em;
-            font-weight: 400;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            opacity: 0;
-            animation: fadeInButton 0.8s ease-in-out 3s forwards, slowFlash 2s ease-in-out infinite 4s;
-            outline: none;
-        }
-        
-        @keyframes slowFlash {
-            0%, 100% {
-                opacity: 1;
-                box-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
-            }
-            50% {
-                opacity: 0.6;
-                box-shadow: 0 0 20px rgba(212, 175, 55, 0.6);
-            }
-        }
-        
-        #enter-btn:hover {
-            text-shadow: 0 0 10px rgba(212, 175, 55, 0.8);
-        }
-        
-        #enter-btn:focus {
-            outline: none;
-            border: none;
-        }
-        
-        #ambient-text {
-            position: absolute;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: rgba(255, 255, 255, 0.6);
+        #chat-input {
+            width: 100%;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            border-radius: 5px;
+            color: #e8e8e8;
             font-size: 0.9em;
-            font-style: italic;
-            z-index: 100;
-            opacity: 0;
-            transition: opacity 2s ease;
+            outline: none;
+            box-sizing: border-box;
         }
         
-        #loading {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
+        #chat-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+        
+        #chat-input:focus {
+            border-color: #d4af37;
+        }
+        
+        .typing-indicator {
             color: #d4af37;
-            font-size: 1.2em;
-            z-index: 150;
             font-style: italic;
-        }
-        
-        canvas {
-            display: block;
-            filter: contrast(1.1) brightness(0.9);
+            opacity: 0.7;
         }
         
         .mysterious-cursor {
@@ -142,7 +197,10 @@
             pointer-events: none;
             z-index: 9999;
             mix-blend-mode: screen;
-            transition: transform 0.1s ease;
+        }
+        
+        canvas {
+            display: block;
         }
     </style>
 </head>
@@ -152,12 +210,16 @@
     <div id="container">
         <div id="story-overlay">
             <div id="story-content">
-                <div id="story-text">Something mysterious awaits within</div>
-                <button id="enter-btn" onclick="enterWorld()">[Click to Enter]</button>
+                <div id="story-text">
+                    <img src="https://cdn.prod.website-files.com/6740d85c4e3daeef29a89470/688c1772aa2e91cfd29b6302_something-mysterious-awaits-wi-01-08-2025%20(1).png" alt="Something mysterious awaits within">
+                </div>
+                <button id="enter-btn" onclick="enterWorld()">
+                    <img src="https://cdn.prod.website-files.com/6740d85c4e3daeef29a89470/688c1772768889f0fca6befa_-ENTER-01-08-2025.png" alt="Click to Enter">
+                </button>
             </div>
         </div>
         
-        <div id="loading" style="display: none;">Awakening the terrarium...</div>
+        <div id="loading">Awakening the terrarium...</div>
         
         <div id="ambient-text">
             "Some worlds are too small to see, yet vast enough to lose yourself in..."
@@ -166,6 +228,9 @@
         <div id="chat-interface">
             <div id="chat-messages">
                 <div class="message maddie-message" id="welcome-message">
+                    *A gentle shimmer emanates from within the glass*<br><br>
+                    Welcome, curious soul... I am Maddie of Oakvale, guardian of this terrAInum where digital magic blooms.<br><br>
+                    Here's a riddle to begin: What grows without soil, thinks without brain, yet connects all living things? 🌱
                 </div>
             </div>
             <input type="text" id="chat-input" placeholder="Type to Maddie..." maxlength="200">
@@ -180,35 +245,7 @@
         let scene, camera, renderer, controls, model, mixer, clock, ambientMusic;
         let isLoading = false;
         let worldEntered = false;
-        
-        // Typing effect for text
-        function typeText(text, element, speed = 50) {
-            return new Promise((resolve) => {
-                element.innerHTML = '';
-                element.classList.add('typing-text');
-                let i = 0;
-                
-                function typeChar() {
-                    if (i < text.length) {
-                        element.innerHTML += text.charAt(i);
-                        i++;
-                        setTimeout(typeChar, speed);
-                    } else {
-                        element.classList.remove('typing-text');
-                        resolve();
-                    }
-                }
-                typeChar();
-            });
-        }
-        
-        // Animate text words on page load with typing effect
-        window.addEventListener('load', async () => {
-            const text = "Something mysterious awaits within";
-            const storyTextElement = document.getElementById('story-text');
-            
-            await typeText(text, storyTextElement, 80);
-        });
+        let isTyping = false;
         
         // Custom cursor
         document.addEventListener('mousemove', (e) => {
@@ -218,8 +255,6 @@
         });
         
         // Chat functionality
-        let isTyping = false;
-        
         document.addEventListener('DOMContentLoaded', () => {
             const chatInput = document.getElementById('chat-input');
             chatInput.addEventListener('keypress', handleChatInput);
@@ -236,21 +271,40 @@
             }
         }
         
+        function typeText(text, element, speed = 30) {
+            return new Promise((resolve) => {
+                element.innerHTML = '';
+                element.classList.add('typing-text');
+                let i = 0;
+                
+                function typeChar() {
+                    if (i < text.length) {
+                        if (text.charAt(i) === '\n') {
+                            element.innerHTML += '<br>';
+                        } else {
+                            element.innerHTML += text.charAt(i);
+                        }
+                        i++;
+                        setTimeout(typeChar, speed);
+                    } else {
+                        element.classList.remove('typing-text');
+                        resolve();
+                    }
+                }
+                typeChar();
+            });
+        }
+        
         function addMessage(text, sender) {
             const messagesContainer = document.getElementById('chat-messages');
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${sender}-message`;
             
             if (sender === 'maddie') {
-                // Type out Maddie's messages
                 messagesContainer.appendChild(messageDiv);
                 messagesContainer.scrollTop = messagesContainer.scrollHeight;
-                
-                typeText(text, messageDiv, 30).then(() => {
-                    // Message typing complete
-                });
+                typeText(text, messageDiv, 30);
             } else {
-                // User messages appear instantly
                 messageDiv.textContent = text;
                 messagesContainer.appendChild(messageDiv);
                 messagesContainer.scrollTop = messagesContainer.scrollHeight;
@@ -281,7 +335,6 @@
             showTyping();
             
             try {
-                // Call your AI API and wait for complete response (text + audio)
                 const response = await fetch('/api/chat', {
                     method: 'POST',
                     headers: {
@@ -294,21 +347,18 @@
                 });
                 
                 const data = await response.json();
-                
                 hideTyping();
                 
                 if (data.success) {
-                    // Add and type out text message
                     addMessage(data.response, 'maddie');
                     
-                    // Play audio after typing is complete (estimate typing time)
-                    const typingDuration = data.response.length * 30; // 30ms per character
+                    const typingDuration = data.response.length * 30;
                     if (data.audioUrl) {
                         setTimeout(() => {
                             const audio = new Audio(data.audioUrl);
                             audio.volume = 0.7;
                             audio.play().catch(e => console.log('Audio playback failed:', e));
-                        }, typingDuration + 200); // Small buffer after typing
+                        }, typingDuration + 200);
                     }
                 } else {
                     addMessage("*whispers softly* The digital streams seem tangled right now...", 'maddie');
@@ -340,25 +390,23 @@
             }, 1000);
         }
         
-        // Initialize the 3D scene
         function init() {
             isLoading = true;
             
-            // Scene setup with mysterious atmosphere
+            // Scene setup
             scene = new THREE.Scene();
             
-            // Create a mysterious, ethereal background
+            // Create background
             const canvas = document.createElement('canvas');
             const context = canvas.getContext('2d');
             canvas.width = 512;
             canvas.height = 512;
             
-            // Create a softer dark background
             const gradient = context.createRadialGradient(256, 256, 0, 256, 256, 256);
-            gradient.addColorStop(0, '#2a2a3e'); // Softer dark blue center
-            gradient.addColorStop(0.4, '#1e1e2e'); // Medium blue
-            gradient.addColorStop(0.7, '#181828'); // Darker blue
-            gradient.addColorStop(1, '#0a0a0f'); // Very dark but not pure black
+            gradient.addColorStop(0, '#2a2a3e');
+            gradient.addColorStop(0.4, '#1e1e2e');
+            gradient.addColorStop(0.7, '#181828');
+            gradient.addColorStop(1, '#0a0a0f');
             
             context.fillStyle = gradient;
             context.fillRect(0, 0, 512, 512);
@@ -367,21 +415,20 @@
             scene.background = bgTexture;
             scene.environment = bgTexture;
             
-            // Clock for animations
             clock = new THREE.Clock();
             
             // Camera setup
             camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
             camera.position.set(8, 6, 8);
             
-            // Renderer setup with mysterious atmosphere
+            // Renderer setup
             renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.shadowMap.enabled = true;
             renderer.shadowMap.type = THREE.PCFSoftShadowMap;
             renderer.outputEncoding = THREE.sRGBEncoding;
             renderer.toneMapping = THREE.ACESFilmicToneMapping;
-            renderer.toneMappingExposure = 0.8; // Darker, more mysterious
+            renderer.toneMappingExposure = 1.2;
             renderer.physicallyCorrectLights = true;
             document.getElementById('container').appendChild(renderer.domElement);
             
@@ -394,11 +441,10 @@
             controls.minDistance = 1;
             controls.maxDistance = 15;
             
-            // Improved lighting setup - more natural
+            // Lighting setup
             const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
             scene.add(ambientLight);
             
-            // Main light - warmer and softer
             const mainLight = new THREE.DirectionalLight(0xffffff, 1.2);
             mainLight.position.set(10, 15, 8);
             mainLight.castShadow = true;
@@ -413,18 +459,13 @@
             mainLight.shadow.bias = -0.0001;
             scene.add(mainLight);
             
-            // Subtle fill light
             const fillLight = new THREE.DirectionalLight(0x87ceeb, 0.3);
             fillLight.position.set(-8, 5, -8);
             scene.add(fillLight);
             
-            // Load the terrarium
             loadModel();
             
-            // Event listeners
             window.addEventListener('resize', onWindowResize);
-            
-            // Start render loop
             animate();
         }
         
@@ -437,7 +478,6 @@
                 function(gltf) {
                     model = gltf.scene;
                     
-                    // Center and scale the model
                     const box = new THREE.Box3().setFromObject(model);
                     const center = box.getCenter(new THREE.Vector3());
                     const size = box.getSize(new THREE.Vector3());
@@ -446,30 +486,23 @@
                     model.position.y = -center.y;
                     model.position.z = -center.z;
                     
-                    // Scale to fit in view and apply your preferred scale
                     const maxDim = Math.max(size.x, size.y, size.z);
                     const scale = (3 / maxDim) * 1.6;
                     model.scale.setScalar(scale);
                     
-                    // Setup animations
                     if (gltf.animations && gltf.animations.length > 0) {
                         mixer = new THREE.AnimationMixer(model);
                         
-                        // Find and play the "Animation" clip
                         const animationClip = gltf.animations.find(clip => clip.name === "Animation");
                         if (animationClip) {
                             const action = mixer.clipAction(animationClip);
                             action.play();
-                            console.log('The terrarium awakens...');
                         } else {
-                            // If "Animation" not found, play the first animation
                             const action = mixer.clipAction(gltf.animations[0]);
                             action.play();
-                            console.log('Ancient movements stir within...');
                         }
                     }
                     
-                    // Enable shadows
                     model.traverse((child) => {
                         if (child.isMesh) {
                             child.castShadow = true;
@@ -480,7 +513,6 @@
                     scene.add(model);
                     isLoading = false;
                     
-                    // Small delay before starting the mystical reveal
                     setTimeout(() => {
                         document.getElementById('loading').style.display = 'none';
                         animateCameraSwoop();
@@ -493,22 +525,20 @@
                     }
                 },
                 function(error) {
-                    console.error('The terrarium remains hidden...', error);
+                    console.error('Error loading model:', error);
                     document.getElementById('loading').innerHTML = 'The terrarium remains elusive...';
                 }
             );
         }
         
         function animateCameraSwoop() {
-            console.log('The veil lifts...');
-            
             const startPos = { x: camera.position.x, y: camera.position.y, z: camera.position.z };
             const startTarget = { x: controls.target.x, y: controls.target.y, z: controls.target.z };
             
             const endPos = { x: 2.77, y: 1.35, z: 3.8 };
             const endTarget = { x: 2.29, y: 1.1, z: 2.96 };
             
-            const duration = 4000; // Longer, more dramatic reveal
+            const duration = 4000;
             const startTime = performance.now();
             
             function easeInOutCubic(t) {
@@ -520,13 +550,11 @@
                 const progress = Math.min(elapsed / duration, 1);
                 const easedProgress = easeInOutCubic(progress);
                 
-                // More dramatic arc for mystical effect
                 const arcHeight = Math.sin(progress * Math.PI) * 2.5;
                 camera.position.x = startPos.x + (endPos.x - startPos.x) * easedProgress;
                 camera.position.y = startPos.y + (endPos.y - startPos.y) * easedProgress + arcHeight;
                 camera.position.z = startPos.z + (endPos.z - startPos.z) * easedProgress;
                 
-                // Interpolate target
                 controls.target.x = startTarget.x + (endTarget.x - startTarget.x) * easedProgress;
                 controls.target.y = startTarget.y + (endTarget.y - startTarget.y) * easedProgress;
                 controls.target.z = startTarget.z + (endTarget.z - startTarget.z) * easedProgress;
@@ -536,17 +564,9 @@
                 if (progress < 1) {
                     requestAnimationFrame(swoopStep);
                 } else {
-                    // Reveal complete
                     controls.enabled = true;
                     document.getElementById('ambient-text').style.opacity = '1';
                     document.getElementById('chat-interface').style.opacity = '1';
-                    
-                    // Type out Maddie's welcome message
-                    const welcomeMsg = "*A gentle shimmer emanates from within the glass*\n\nWelcome, curious soul... I am Maddie of Oakvale, guardian of this terrAInum where digital magic blooms.\n\nHere's a riddle to begin: What grows without soil, thinks without brain, yet connects all living things? 🌱";
-                    const welcomeElement = document.getElementById('welcome-message');
-                    typeText(welcomeMsg, welcomeElement, 40);
-                    
-                    console.log('The terrarium reveals its secrets...');
                 }
             }
             
@@ -558,13 +578,11 @@
             
             const delta = clock.getDelta();
             
-            // Update animations
             if (mixer) {
                 mixer.update(delta);
             }
             
             controls.update();
-            
             renderer.render(scene, camera);
         }
         
