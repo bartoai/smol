@@ -3,14 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Forgotten Terrarium</title>
     <link rel="icon" href="data:,">
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap');
+        
         body {
             margin: 0;
             padding: 0;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            font-family: 'Arial', sans-serif;
+            background: radial-gradient(circle at center, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+            font-family: 'Crimson Text', serif;
             overflow: hidden;
+            cursor: none;
         }
         
         #container {
@@ -19,48 +23,122 @@
             height: 100vh;
         }
         
+        #story-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 200;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 1s ease;
+        }
+        
+        #story-content {
+            max-width: 600px;
+            text-align: center;
+            color: #e8e8e8;
+            padding: 40px;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+        }
+        
+        #story-content h1 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            color: #d4af37;
+            text-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
+            font-weight: 600;
+        }
+        
+        #story-content p {
+            font-size: 1.2em;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            font-style: italic;
+        }
+        
+        #enter-btn {
+            background: linear-gradient(45deg, #d4af37, #f4e87c);
+            color: #000;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(212, 175, 55, 0.3);
+        }
+        
+        #enter-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(212, 175, 55, 0.5);
+        }
+        
+        #ambient-text {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.9em;
+            font-style: italic;
+            z-index: 100;
+            opacity: 0;
+            transition: opacity 2s ease;
+        }
+        
         #controls {
             position: absolute;
-            top: 20px;
-            right: 20px;
-            background: rgba(0, 0, 0, 0.8);
-            color: white;
-            padding: 15px;
+            bottom: 30px;
+            right: 30px;
+            background: rgba(0, 0, 0, 0.6);
+            color: #d4af37;
+            padding: 15px 20px;
             border-radius: 10px;
             backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(212, 175, 55, 0.2);
             z-index: 100;
+            opacity: 0;
+            transition: opacity 2s ease 3s;
         }
         
         .control-group {
             margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .control-group:last-child {
+            margin-bottom: 0;
         }
         
         .control-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-size: 12px;
+            font-size: 0.9em;
             color: #ccc;
+            min-width: 80px;
         }
         
-        .control-group input {
-            width: 100%;
-            margin-bottom: 5px;
+        .control-group input[type="range"] {
+            flex: 1;
+            accent-color: #d4af37;
         }
         
-        button {
-            background: #00ff88;
-            color: black;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-            margin: 2px;
+        .control-group input[type="checkbox"] {
+            accent-color: #d4af37;
         }
         
-        button:hover {
-            background: #00cc6a;
+        #scaleValue {
+            color: #d4af37;
+            font-weight: 600;
+            min-width: 30px;
         }
         
         #loading {
@@ -68,36 +146,58 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            color: white;
-            font-size: 18px;
-            z-index: 200;
-        }
-        
-        .stat-value {
-            color: #00ff88;
-            font-weight: bold;
+            color: #d4af37;
+            font-size: 1.2em;
+            z-index: 150;
+            font-style: italic;
         }
         
         canvas {
             display: block;
+            filter: contrast(1.1) brightness(0.9);
+        }
+        
+        .mysterious-cursor {
+            position: fixed;
+            width: 20px;
+            height: 20px;
+            background: radial-gradient(circle, rgba(212, 175, 55, 0.8) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            mix-blend-mode: screen;
+            transition: transform 0.1s ease;
         }
     </style>
 </head>
 <body>
+    <div class="mysterious-cursor" id="cursor"></div>
+    
     <div id="container">
-        <div id="loading">Loading 3D Model...</div>
+        <div id="story-overlay">
+            <div id="story-content">
+                <h1>The Forgotten Terrarium</h1>
+                <p>In the dusty corner of an abandoned greenhouse, you discover something extraordinary...</p>
+                <p>A miniature world, perfectly preserved, where time seems to stand still. But as you lean closer, you notice something moving within the glass walls.</p>
+                <p>What secrets lie hidden in this tiny ecosystem?</p>
+                <button id="enter-btn" onclick="enterWorld()">Enter the Mystery</button>
+            </div>
+        </div>
+        
+        <div id="loading" style="display: none;">Awakening the terrarium...</div>
+        
+        <div id="ambient-text">
+            "Some worlds are too small to see, yet vast enough to lose yourself in..."
+        </div>
         
         <div id="controls">
             <div class="control-group">
-                <button onclick="resetCamera()">Reset Camera</button>
-            </div>
-            <div class="control-group">
-                <label>Model Scale:</label>
+                <label>Scale:</label>
                 <input type="range" id="scaleSlider" min="0.1" max="3" step="0.1" value="1.6">
                 <span id="scaleValue">1.6</span>
             </div>
             <div class="control-group">
-                <label>Auto Rotate:</label>
+                <label>Auto Orbit:</label>
                 <input type="checkbox" id="autoRotate">
             </div>
         </div>
@@ -109,36 +209,53 @@
 
     <script>
         let scene, camera, renderer, controls, model, mixer, clock;
-        let isLoading = true;
+        let isLoading = false;
+        let worldEntered = false;
+        
+        // Custom cursor
+        document.addEventListener('mousemove', (e) => {
+            const cursor = document.getElementById('cursor');
+            cursor.style.left = e.clientX - 10 + 'px';
+            cursor.style.top = e.clientY - 10 + 'px';
+        });
+        
+        function enterWorld() {
+            if (worldEntered) return;
+            worldEntered = true;
+            
+            document.getElementById('story-overlay').style.opacity = '0';
+            setTimeout(() => {
+                document.getElementById('story-overlay').style.display = 'none';
+                document.getElementById('loading').style.display = 'block';
+                init();
+            }, 1000);
+        }
         
         // Initialize the 3D scene
         function init() {
-            // Scene setup with realistic background
+            isLoading = true;
+            
+            // Scene setup with mysterious atmosphere
             scene = new THREE.Scene();
             
-            // Create a realistic environment background
-            const loader = new THREE.TextureLoader();
-            
-            // Create a gradient background using CSS-style colors
+            // Create a mysterious, ethereal background
             const canvas = document.createElement('canvas');
             const context = canvas.getContext('2d');
             canvas.width = 512;
             canvas.height = 512;
             
-            // Create a radial gradient from light blue to soft white
+            // Create a dark, mysterious gradient
             const gradient = context.createRadialGradient(256, 256, 0, 256, 256, 256);
-            gradient.addColorStop(0, '#87CEEB'); // Sky blue center
-            gradient.addColorStop(0.3, '#E0F6FF'); // Light blue
-            gradient.addColorStop(0.6, '#F0F8FF'); // Alice blue
-            gradient.addColorStop(1, '#FFFFFF'); // White edges
+            gradient.addColorStop(0, '#1a1a2e'); // Dark blue center
+            gradient.addColorStop(0.4, '#16213e'); // Deeper blue
+            gradient.addColorStop(0.7, '#0f1419'); // Very dark blue
+            gradient.addColorStop(1, '#000000'); // Black edges
             
             context.fillStyle = gradient;
             context.fillRect(0, 0, 512, 512);
             
             const bgTexture = new THREE.CanvasTexture(canvas);
             scene.background = bgTexture;
-            
-            // Add subtle environment lighting
             scene.environment = bgTexture;
             
             // Clock for animations
@@ -146,59 +263,58 @@
             
             // Camera setup
             camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            // Start from a dramatic angle for the swoop
             camera.position.set(8, 6, 8);
             
-            // Renderer setup with enhanced settings
+            // Renderer setup with mysterious atmosphere
             renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.shadowMap.enabled = true;
             renderer.shadowMap.type = THREE.PCFSoftShadowMap;
             renderer.outputEncoding = THREE.sRGBEncoding;
             renderer.toneMapping = THREE.ACESFilmicToneMapping;
-            renderer.toneMappingExposure = 1.2;
+            renderer.toneMappingExposure = 0.8; // Darker, more mysterious
             renderer.physicallyCorrectLights = true;
             document.getElementById('container').appendChild(renderer.domElement);
             
             // Controls setup
             controls = new THREE.OrbitControls(camera, renderer.domElement);
-            controls.target.set(0, 0, 0); // Start looking at origin
-            controls.enabled = false; // Disable during animation
+            controls.target.set(0, 0, 0);
+            controls.enabled = false;
             controls.enableDamping = true;
             controls.dampingFactor = 0.05;
-            controls.screenSpacePanning = false;
             controls.minDistance = 1;
-            controls.maxDistance = 100;
+            controls.maxDistance = 15;
             
-            // Enhanced lighting setup for realism
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+            // Mysterious lighting setup
+            const ambientLight = new THREE.AmbientLight(0x404080, 0.3);
             scene.add(ambientLight);
             
-            const directionalLight = new THREE.DirectionalLight(0xffffff, 1.2);
-            directionalLight.position.set(10, 15, 5);
-            directionalLight.castShadow = true;
-            directionalLight.shadow.mapSize.width = 4096;
-            directionalLight.shadow.mapSize.height = 4096;
-            directionalLight.shadow.camera.near = 0.1;
-            directionalLight.shadow.camera.far = 50;
-            directionalLight.shadow.camera.left = -20;
-            directionalLight.shadow.camera.right = 20;
-            directionalLight.shadow.camera.top = 20;
-            directionalLight.shadow.camera.bottom = -20;
-            directionalLight.shadow.bias = -0.0001;
-            scene.add(directionalLight);
+            // Main mystical light with golden hue
+            const mainLight = new THREE.DirectionalLight(0xd4af37, 1.0);
+            mainLight.position.set(8, 12, 6);
+            mainLight.castShadow = true;
+            mainLight.shadow.mapSize.width = 4096;
+            mainLight.shadow.mapSize.height = 4096;
+            mainLight.shadow.camera.near = 0.1;
+            mainLight.shadow.camera.far = 50;
+            mainLight.shadow.camera.left = -20;
+            mainLight.shadow.camera.right = 20;
+            mainLight.shadow.camera.top = 20;
+            mainLight.shadow.camera.bottom = -20;
+            mainLight.shadow.bias = -0.0001;
+            scene.add(mainLight);
             
-            // Add rim lighting for more depth
-            const rimLight = new THREE.DirectionalLight(0x87CEEB, 0.3);
-            rimLight.position.set(-5, 10, -5);
+            // Rim light with mystical blue
+            const rimLight = new THREE.DirectionalLight(0x6666ff, 0.4);
+            rimLight.position.set(-8, 5, -8);
             scene.add(rimLight);
             
-            // Soft fill light from below
-            const fillLight = new THREE.DirectionalLight(0xffffff, 0.2);
-            fillLight.position.set(0, -10, 5);
+            // Subtle fill light
+            const fillLight = new THREE.DirectionalLight(0xffffff, 0.1);
+            fillLight.position.set(0, -5, 5);
             scene.add(fillLight);
             
-            // Load the 3D model
+            // Load the terrarium
             loadModel();
             
             // Event listeners
@@ -212,13 +328,7 @@
         
         function loadModel() {
             const loader = new THREE.GLTFLoader();
-            
-            // Option 1: Use jsdelivr CDN (recommended)
             const modelUrl = 'https://cdn.jsdelivr.net/gh/bartoai/smol@main/smol_ame_in_an_upcycled_terrarium_hololiveen.glb';
-            
-            // Option 2: Alternative CDNs (uncomment to try)
-            // const modelUrl = 'https://gitcdn.xyz/repo/bartoai/smol/main/smol_ame_in_an_upcycled_terrarium_hololiveen.glb';
-            // const modelUrl = 'https://rawcdn.githack.com/bartoai/smol/main/smol_ame_in_an_upcycled_terrarium_hololiveen.glb';
             
             loader.load(
                 modelUrl,
@@ -236,7 +346,7 @@
                     
                     // Scale to fit in view and apply your preferred scale
                     const maxDim = Math.max(size.x, size.y, size.z);
-                    const scale = (3 / maxDim) * 1.6; // Apply 1.6x scale
+                    const scale = (3 / maxDim) * 1.6;
                     model.scale.setScalar(scale);
                     
                     // Setup animations
@@ -248,52 +358,53 @@
                         if (animationClip) {
                             const action = mixer.clipAction(animationClip);
                             action.play();
-                            console.log('Playing animation:', animationClip.name);
+                            console.log('The terrarium awakens...');
                         } else {
                             // If "Animation" not found, play the first animation
                             const action = mixer.clipAction(gltf.animations[0]);
                             action.play();
-                            console.log('Playing first available animation:', gltf.animations[0].name);
+                            console.log('Ancient movements stir within...');
                         }
                     }
                     
-                    // Enable shadows
+                    // Enable shadows with mysterious enhancement
                     model.traverse((child) => {
                         if (child.isMesh) {
                             child.castShadow = true;
                             child.receiveShadow = true;
+                            
+                            // Add subtle glow to materials
+                            if (child.material) {
+                                child.material.emissive = new THREE.Color(0x001122);
+                                child.material.emissiveIntensity = 0.05;
+                            }
                         }
                     });
                     
                     scene.add(model);
                     isLoading = false;
                     
-                    // Small delay to ensure model is fully rendered before starting animation
+                    // Small delay before starting the mystical reveal
                     setTimeout(() => {
                         document.getElementById('loading').style.display = 'none';
                         animateCameraSwoop();
-                    }, 500);
-                    
-                    // Focus camera on model (this will be the end target)
-                    // controls.target.copy(center);
-                    // controls.update();
+                    }, 1000);
                 },
                 function(progress) {
                     if (progress.total > 0) {
                         const percentage = (progress.loaded / progress.total * 100).toFixed(1);
-                        console.log('Loading progress:', percentage + '%');
-                        document.getElementById('loading').innerHTML = `Loading 3D Model... ${percentage}%`;
+                        document.getElementById('loading').innerHTML = `Awakening the terrarium... ${percentage}%`;
                     }
                 },
                 function(error) {
-                    console.error('Error loading model:', error);
-                    document.getElementById('loading').innerHTML = 'Error loading model. Please check the file path.';
+                    console.error('The terrarium remains hidden...', error);
+                    document.getElementById('loading').innerHTML = 'The terrarium remains elusive...';
                 }
             );
         }
         
         function animateCameraSwoop() {
-            console.log('Starting camera swoop animation...');
+            console.log('The veil lifts...');
             
             const startPos = { x: camera.position.x, y: camera.position.y, z: camera.position.z };
             const startTarget = { x: controls.target.x, y: controls.target.y, z: controls.target.z };
@@ -301,7 +412,7 @@
             const endPos = { x: 2.77, y: 1.35, z: 3.8 };
             const endTarget = { x: 2.29, y: 1.1, z: 2.96 };
             
-            const duration = 3000; // 3 seconds
+            const duration = 4000; // Longer, more dramatic reveal
             const startTime = performance.now();
             
             function easeInOutCubic(t) {
@@ -313,8 +424,8 @@
                 const progress = Math.min(elapsed / duration, 1);
                 const easedProgress = easeInOutCubic(progress);
                 
-                // Interpolate camera position with a slight arc
-                const arcHeight = Math.sin(progress * Math.PI) * 1.5; // Creates an arc
+                // More dramatic arc for mystical effect
+                const arcHeight = Math.sin(progress * Math.PI) * 2.5;
                 camera.position.x = startPos.x + (endPos.x - startPos.x) * easedProgress;
                 camera.position.y = startPos.y + (endPos.y - startPos.y) * easedProgress + arcHeight;
                 camera.position.z = startPos.z + (endPos.z - startPos.z) * easedProgress;
@@ -329,9 +440,11 @@
                 if (progress < 1) {
                     requestAnimationFrame(swoopStep);
                 } else {
-                    // Animation complete, enable controls
+                    // Reveal complete
                     controls.enabled = true;
-                    console.log('Camera swoop animation complete!');
+                    document.getElementById('ambient-text').style.opacity = '1';
+                    document.getElementById('controls').style.opacity = '1';
+                    console.log('The terrarium reveals its secrets...');
                 }
             }
             
@@ -353,18 +466,11 @@
             renderer.render(scene, camera);
         }
         
-        function resetCamera() {
-            camera.position.set(2.77, 1.35, 3.8);
-            controls.target.set(2.29, 1.1, 2.96);
-            controls.update();
-        }
-        
         function updateScale() {
             const scale = parseFloat(document.getElementById('scaleSlider').value);
             document.getElementById('scaleValue').textContent = scale.toFixed(1);
             
             if (model) {
-                // Apply the base scale calculation with the slider multiplier
                 const box = new THREE.Box3().setFromObject(model);
                 const size = box.getSize(new THREE.Vector3());
                 const maxDim = Math.max(size.x, size.y, size.z);
@@ -375,7 +481,7 @@
         
         function toggleAutoRotate() {
             controls.autoRotate = document.getElementById('autoRotate').checked;
-            controls.autoRotateSpeed = 2.0;
+            controls.autoRotateSpeed = 1.0; // Slower, more contemplative
         }
         
         function onWindowResize() {
@@ -383,9 +489,6 @@
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
         }
-        
-        // Initialize the scene
-        init();
     </script>
 </body>
 </html>
