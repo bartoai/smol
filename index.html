@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Maddie's World</title>
+    <title>Claude's Daughter - Journey to the Terrarium</title>
     <link rel="icon" href="https://cdn.prod.website-files.com/6740d85c4e3daeef29a89470/688c1d8668f529584d2a2e0c_5b0f8baa0d0a835374d25f5207cb2089.png">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
@@ -11,16 +11,47 @@
         body {
             margin: 0;
             padding: 0;
-            background: radial-gradient(circle at center, #2a2a3e 0%, #1e1e2e 50%, #181828 70%, #0a0a0f 100%);
+            background: #000;
             font-family: 'Press Start 2P', monospace;
             overflow: hidden;
             cursor: none;
         }
         
-        #container {
+        #forest-scene {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 3s ease-in-out;
+            z-index: 100;
+        }
+        
+        #forest-scene.visible {
+            opacity: 1;
+        }
+        
+        #forest-scene.fade-out {
+            opacity: 0;
+            transition: opacity 2s ease-in-out;
+        }
+        
+        spline-viewer {
+            width: 100%;
+            height: 100%;
+        }
+        
+        #terrarium-container {
             position: relative;
             width: 100vw;
             height: 100vh;
+            opacity: 0;
+            transition: opacity 2s ease-in-out;
+        }
+        
+        #terrarium-container.visible {
+            opacity: 1;
         }
         
         #story-overlay {
@@ -97,7 +128,7 @@
             left: 50%;
             transform: translateX(-50%);
             color: rgba(255, 255, 255, 0.4);
-            font-size: 6px;
+            font-size: 8px;
             z-index: 100;
             opacity: 0;
             transition: opacity 2s ease;
@@ -236,7 +267,7 @@
             position: fixed;
             width: 20px;
             height: 20px;
-            background: radial-gradient(circle, rgba(212, 175, 55, 0.8) 0%, transparent 70%);
+            background: radial-gradient(circle, rgba(255, 68, 68, 0.8) 0%, transparent 70%);
             border-radius: 50%;
             pointer-events: none;
             z-index: 9999;
@@ -251,7 +282,14 @@
 <body>
     <div class="mysterious-cursor" id="cursor"></div>
     
-    <div id="container">
+    <!-- Forest Journey Scene -->
+    <div id="forest-scene">
+        <script type="module" src="https://unpkg.com/@splinetool/viewer@1.10.38/build/spline-viewer.js"></script>
+        <spline-viewer url="https://prod.spline.design/AiYYZCmz1h5o0V8H/scene.splinecode"></spline-viewer>
+    </div>
+    
+    <!-- Terrarium Container -->
+    <div id="terrarium-container">
         <div id="story-overlay">
             <div id="story-content">
                 <div id="story-text">
@@ -263,14 +301,14 @@
             </div>
         </div>
         
-        <div id="loading">Awakening maddie...</div>
+        <div id="loading">Awakening the terrarium...</div>
         
         <div id="ambient-text">
             "Some worlds are too small to see, yet vast enough to lose yourself in..."
         </div>
         
         <div id="chat-interface">
-            <div id="chat-header">MADDIE COMMUNICATION TERMINAL</div>
+            <div id="chat-header">TERRARIUM COMMUNICATION TERMINAL</div>
             <div id="chat-messages">
                 <div class="message maddie-message" id="welcome-message">
                     > SYSTEM INITIALIZED<br>
@@ -297,6 +335,8 @@
         let isTyping = false;
         let isRecording = false;
         let recognition;
+        let splineViewer;
+        let journeyStarted = false;
         
         // Custom cursor
         document.addEventListener('mousemove', (e) => {
@@ -304,6 +344,59 @@
             cursor.style.left = e.clientX - 10 + 'px';
             cursor.style.top = e.clientY - 10 + 'px';
         });
+        
+        // Start the forest journey when page loads
+        window.addEventListener('load', () => {
+            startForestJourney();
+        });
+        
+        function startForestJourney() {
+            const forestScene = document.getElementById('forest-scene');
+            
+            // Fade in the forest scene
+            setTimeout(() => {
+                forestScene.classList.add('visible');
+            }, 500);
+            
+            // Wait for scene to load, then start camera movement
+            setTimeout(() => {
+                splineViewer = document.querySelector('spline-viewer');
+                if (splineViewer) {
+                    // Start moving through the forest
+                    animateForestWalk();
+                }
+            }, 4000);
+        }
+        
+        function animateForestWalk() {
+            // Start ambient music for the journey
+            ambientMusic = new Audio('https://cdn.jsdelivr.net/gh/bartoai/smol@main/fable.mp3');
+            ambientMusic.loop = true;
+            ambientMusic.volume = 0.05; // Very quiet during forest walk
+            ambientMusic.play().catch(e => console.log('Music autoplay blocked'));
+            
+            // Simulate walking through forest for 6 seconds
+            setTimeout(() => {
+                // Fade out forest and transition to terrarium
+                const forestScene = document.getElementById('forest-scene');
+                forestScene.classList.add('fade-out');
+                
+                setTimeout(() => {
+                    forestScene.style.display = 'none';
+                    showTerrariumWorld();
+                }, 2000);
+            }, 6000);
+        }
+        
+        function showTerrariumWorld() {
+            const terrariumContainer = document.getElementById('terrarium-container');
+            terrariumContainer.classList.add('visible');
+            
+            // Increase music volume slightly for terrarium world
+            if (ambientMusic) {
+                ambientMusic.volume = 0.1;
+            }
+        }
         
         // Chat functionality
         document.addEventListener('DOMContentLoaded', () => {
@@ -469,23 +562,19 @@
                 hideTyping();
                 
                 if (data.success) {
-                    // Wait for audio to be ready before showing text
                     if (data.audioUrl) {
                         const audio = new Audio(data.audioUrl);
-                        audio.volume = 1.0; // Maximum volume
+                        audio.volume = 1.0;
                         
-                        // Wait for audio to load, then show text and play audio simultaneously
                         audio.addEventListener('canplaythrough', () => {
                             addMessage(data.response, 'maddie');
                             audio.play().catch(e => console.log('Audio playback failed:', e));
                         });
                         
                         audio.addEventListener('error', () => {
-                            // If audio fails, still show the text
                             addMessage(data.response, 'maddie');
                         });
                     } else {
-                        // No audio, just show text
                         addMessage(data.response, 'maddie');
                     }
                 } else {
@@ -503,12 +592,6 @@
         function enterWorld() {
             if (worldEntered) return;
             worldEntered = true;
-            
-            // Start ambient music at very low volume
-            ambientMusic = new Audio('https://cdn.jsdelivr.net/gh/bartoai/smol@main/fable.mp3');
-            ambientMusic.loop = true;
-            ambientMusic.volume = 0.1;
-            ambientMusic.play().catch(e => console.log('Music autoplay blocked'));
             
             document.getElementById('story-overlay').style.opacity = '0';
             setTimeout(() => {
@@ -558,7 +641,7 @@
             renderer.toneMapping = THREE.ACESFilmicToneMapping;
             renderer.toneMappingExposure = 1.2;
             renderer.physicallyCorrectLights = true;
-            document.getElementById('container').appendChild(renderer.domElement);
+            document.getElementById('terrarium-container').appendChild(renderer.domElement);
             
             // Controls setup
             controls = new THREE.OrbitControls(camera, renderer.domElement);
