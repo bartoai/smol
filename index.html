@@ -106,18 +106,20 @@
         
         #chat-interface {
             position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            width: 100%;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            max-width: 900px;
             height: 200px;
             background: #000;
-            border-top: 4px solid #fff;
+            border: 4px solid #fff;
             border-radius: 0;
             padding: 0;
             z-index: 100;
             opacity: 0;
             transition: opacity 2s ease 3s;
+            box-shadow: 4px 4px 0px #666;
         }
         
         #chat-header {
@@ -169,20 +171,20 @@
             display: flex;
             background: #000;
             border-top: 2px solid #fff;
-            padding: 8px;
+            padding: 12px;
             gap: 8px;
-            height: 40px;
+            height: 50px;
             box-sizing: border-box;
         }
         
         #chat-input {
             flex: 1;
-            padding: 8px;
+            padding: 10px;
             background: #222;
             border: 2px solid #666;
             border-radius: 0;
             color: #fff;
-            font-size: 7px;
+            font-size: 8px;
             font-family: 'Press Start 2P', monospace;
             outline: none;
             box-sizing: border-box;
@@ -201,11 +203,11 @@
             background: #444;
             border: 2px solid #666;
             color: #fff;
-            padding: 8px;
+            padding: 10px;
             cursor: pointer;
             font-size: 8px;
             transition: all 0.2s ease;
-            min-width: 40px;
+            min-width: 50px;
         }
         
         #mic-button:hover {
