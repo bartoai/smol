@@ -19,23 +19,6 @@
             height: 100vh;
         }
         
-        #stats {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            background: rgba(0, 0, 0, 0.8);
-            color: #00ff88;
-            padding: 15px;
-            border-radius: 10px;
-            font-family: 'Courier New', monospace;
-            font-size: 14px;
-            line-height: 1.4;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            z-index: 100;
-            min-width: 280px;
-        }
-        
         #controls {
             position: absolute;
             top: 20px;
@@ -94,35 +77,19 @@
             color: #00ff88;
             font-weight: bold;
         }
+        
+        canvas {
+            display: block;
+        }
     </style>
 </head>
 <body>
     <div id="container">
         <div id="loading">Loading 3D Model...</div>
         
-        <div id="stats">
-            <div><strong>Camera Position:</strong></div>
-            <div>X: <span id="posX" class="stat-value">0</span></div>
-            <div>Y: <span id="posY" class="stat-value">0</span></div>
-            <div>Z: <span id="posZ" class="stat-value">0</span></div>
-            <br>
-            <div><strong>Camera Rotation:</strong></div>
-            <div>X: <span id="rotX" class="stat-value">0</span>°</div>
-            <div>Y: <span id="rotY" class="stat-value">0</span>°</div>
-            <div>Z: <span id="rotZ" class="stat-value">0</span>°</div>
-            <br>
-            <div><strong>Target:</strong></div>
-            <div>X: <span id="targetX" class="stat-value">0</span></div>
-            <div>Y: <span id="targetY" class="stat-value">0</span></div>
-            <div>Z: <span id="targetZ" class="stat-value">0</span></div>
-            <br>
-            <div><strong>Distance:</strong> <span id="distance" class="stat-value">0</span></div>
-        </div>
-        
         <div id="controls">
             <div class="control-group">
                 <button onclick="resetCamera()">Reset Camera</button>
-                <button onclick="copySettings()">Copy Settings</button>
             </div>
             <div class="control-group">
                 <label>Model Scale:</label>
@@ -132,9 +99,6 @@
             <div class="control-group">
                 <label>Auto Rotate:</label>
                 <input type="checkbox" id="autoRotate">
-            </div>
-            <div class="control-group">
-                <button onclick="exportPosition()">Export JSON</button>
             </div>
         </div>
     </div>
@@ -149,9 +113,33 @@
         
         // Initialize the 3D scene
         function init() {
-            // Scene setup
+            // Scene setup with realistic background
             scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x222222);
+            
+            // Create a realistic environment background
+            const loader = new THREE.TextureLoader();
+            
+            // Create a gradient background using CSS-style colors
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            canvas.width = 512;
+            canvas.height = 512;
+            
+            // Create a radial gradient from light blue to soft white
+            const gradient = context.createRadialGradient(256, 256, 0, 256, 256, 256);
+            gradient.addColorStop(0, '#87CEEB'); // Sky blue center
+            gradient.addColorStop(0.3, '#E0F6FF'); // Light blue
+            gradient.addColorStop(0.6, '#F0F8FF'); // Alice blue
+            gradient.addColorStop(1, '#FFFFFF'); // White edges
+            
+            context.fillStyle = gradient;
+            context.fillRect(0, 0, 512, 512);
+            
+            const bgTexture = new THREE.CanvasTexture(canvas);
+            scene.background = bgTexture;
+            
+            // Add subtle environment lighting
+            scene.environment = bgTexture;
             
             // Clock for animations
             clock = new THREE.Clock();
@@ -161,12 +149,15 @@
             // Start from a dramatic angle for the swoop
             camera.position.set(8, 6, 8);
             
-            // Renderer setup
-            renderer = new THREE.WebGLRenderer({ antialias: true });
+            // Renderer setup with enhanced settings
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.shadowMap.enabled = true;
             renderer.shadowMap.type = THREE.PCFSoftShadowMap;
             renderer.outputEncoding = THREE.sRGBEncoding;
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.2;
+            renderer.physicallyCorrectLights = true;
             document.getElementById('container').appendChild(renderer.domElement);
             
             // Controls setup
@@ -179,20 +170,33 @@
             controls.minDistance = 1;
             controls.maxDistance = 100;
             
-            // Lighting setup
-            const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+            // Enhanced lighting setup for realism
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
             scene.add(ambientLight);
             
-            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-            directionalLight.position.set(10, 10, 5);
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 1.2);
+            directionalLight.position.set(10, 15, 5);
             directionalLight.castShadow = true;
-            directionalLight.shadow.mapSize.width = 2048;
-            directionalLight.shadow.mapSize.height = 2048;
+            directionalLight.shadow.mapSize.width = 4096;
+            directionalLight.shadow.mapSize.height = 4096;
+            directionalLight.shadow.camera.near = 0.1;
+            directionalLight.shadow.camera.far = 50;
+            directionalLight.shadow.camera.left = -20;
+            directionalLight.shadow.camera.right = 20;
+            directionalLight.shadow.camera.top = 20;
+            directionalLight.shadow.camera.bottom = -20;
+            directionalLight.shadow.bias = -0.0001;
             scene.add(directionalLight);
             
-            const pointLight = new THREE.PointLight(0xffffff, 0.5);
-            pointLight.position.set(-10, 10, -10);
-            scene.add(pointLight);
+            // Add rim lighting for more depth
+            const rimLight = new THREE.DirectionalLight(0x87CEEB, 0.3);
+            rimLight.position.set(-5, 10, -5);
+            scene.add(rimLight);
+            
+            // Soft fill light from below
+            const fillLight = new THREE.DirectionalLight(0xffffff, 0.2);
+            fillLight.position.set(0, -10, 5);
+            scene.add(fillLight);
             
             // Load the 3D model
             loadModel();
@@ -294,8 +298,8 @@
             const startPos = { x: camera.position.x, y: camera.position.y, z: camera.position.z };
             const startTarget = { x: controls.target.x, y: controls.target.y, z: controls.target.z };
             
-            const endPos = { x: 1.87, y: 1.28, z: 2.93 };
-            const endTarget = { x: 1.43, y: 1.1, z: 2.05 };
+            const endPos = { x: 2.77, y: 1.35, z: 3.8 };
+            const endTarget = { x: 2.29, y: 1.1, z: 2.96 };
             
             const duration = 3000; // 3 seconds
             const startTime = performance.now();
@@ -346,58 +350,13 @@
             
             controls.update();
             
-            if (!isLoading) {
-                updateStats();
-            }
-            
             renderer.render(scene, camera);
         }
         
-        function updateStats() {
-            // Camera position
-            document.getElementById('posX').textContent = camera.position.x.toFixed(2);
-            document.getElementById('posY').textContent = camera.position.y.toFixed(2);
-            document.getElementById('posZ').textContent = camera.position.z.toFixed(2);
-            
-            // Camera rotation (convert from radians to degrees)
-            document.getElementById('rotX').textContent = (camera.rotation.x * 180 / Math.PI).toFixed(1);
-            document.getElementById('rotY').textContent = (camera.rotation.y * 180 / Math.PI).toFixed(1);
-            document.getElementById('rotZ').textContent = (camera.rotation.z * 180 / Math.PI).toFixed(1);
-            
-            // Target position
-            document.getElementById('targetX').textContent = controls.target.x.toFixed(2);
-            document.getElementById('targetY').textContent = controls.target.y.toFixed(2);
-            document.getElementById('targetZ').textContent = controls.target.z.toFixed(2);
-            
-            // Distance from target
-            const distance = camera.position.distanceTo(controls.target);
-            document.getElementById('distance').textContent = distance.toFixed(2);
-        }
-        
         function resetCamera() {
-            camera.position.set(1.87, 1.28, 2.93);
-            controls.target.set(1.43, 1.1, 2.05);
+            camera.position.set(2.77, 1.35, 3.8);
+            controls.target.set(2.29, 1.1, 2.96);
             controls.update();
-        }
-        
-        function copySettings() {
-            const settings = {
-                position: {
-                    x: parseFloat(camera.position.x.toFixed(2)),
-                    y: parseFloat(camera.position.y.toFixed(2)),
-                    z: parseFloat(camera.position.z.toFixed(2))
-                },
-                target: {
-                    x: parseFloat(controls.target.x.toFixed(2)),
-                    y: parseFloat(controls.target.y.toFixed(2)),
-                    z: parseFloat(controls.target.z.toFixed(2))
-                },
-                distance: parseFloat(camera.position.distanceTo(controls.target).toFixed(2))
-            };
-            
-            navigator.clipboard.writeText(JSON.stringify(settings, null, 2)).then(() => {
-                alert('Camera settings copied to clipboard!');
-            });
         }
         
         function updateScale() {
@@ -417,42 +376,6 @@
         function toggleAutoRotate() {
             controls.autoRotate = document.getElementById('autoRotate').checked;
             controls.autoRotateSpeed = 2.0;
-        }
-        
-        function exportPosition() {
-            const settings = {
-                camera: {
-                    position: {
-                        x: parseFloat(camera.position.x.toFixed(2)),
-                        y: parseFloat(camera.position.y.toFixed(2)),
-                        z: parseFloat(camera.position.z.toFixed(2))
-                    },
-                    rotation: {
-                        x: parseFloat((camera.rotation.x * 180 / Math.PI).toFixed(1)),
-                        y: parseFloat((camera.rotation.y * 180 / Math.PI).toFixed(1)),
-                        z: parseFloat((camera.rotation.z * 180 / Math.PI).toFixed(1))
-                    }
-                },
-                controls: {
-                    target: {
-                        x: parseFloat(controls.target.x.toFixed(2)),
-                        y: parseFloat(controls.target.y.toFixed(2)),
-                        z: parseFloat(controls.target.z.toFixed(2))
-                    },
-                    distance: parseFloat(camera.position.distanceTo(controls.target).toFixed(2))
-                },
-                model: {
-                    scale: parseFloat(document.getElementById('scaleSlider').value)
-                }
-            };
-            
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(settings, null, 2));
-            const downloadAnchorNode = document.createElement('a');
-            downloadAnchorNode.setAttribute("href", dataStr);
-            downloadAnchorNode.setAttribute("download", "camera_settings.json");
-            document.body.appendChild(downloadAnchorNode);
-            downloadAnchorNode.click();
-            downloadAnchorNode.remove();
         }
         
         function onWindowResize() {
