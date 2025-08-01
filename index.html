@@ -76,6 +76,61 @@
             backdrop-filter: blur(10px);
         }
 
+        #camera-controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 12px;
+            z-index: 10;
+            backdrop-filter: blur(10px);
+            min-width: 200px;
+        }
+
+        .preset-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 8px 12px;
+            margin: 2px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 11px;
+            transition: all 0.3s ease;
+        }
+
+        .preset-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .coord-display {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px;
+            border-radius: 5px;
+            margin: 5px 0;
+            font-family: monospace;
+            font-size: 10px;
+        }
+
+        .save-btn {
+            background: #4CAF50;
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 11px;
+            margin: 5px 0;
+        }
+
+        .save-btn:hover {
+            background: #45a049;
+        }
+
         canvas {
             display: block;
         }
@@ -86,6 +141,10 @@
         <div id="loading">
             <div class="loading-spinner"></div>
             <div>Loading 3D Model...</div>
+        <div id="info">
+            <strong>Smol Ame Terrarium</strong><br>
+            3D Model Viewer<br>
+            <small>Use camera helper to find perfect angles!</small>
         </div>
         
         <div id="controls">
@@ -95,9 +154,24 @@
             🎡 Mouse Wheel: Zoom
         </div>
 
-        <div id="info">
-            <strong>Smol Ame Terrarium</strong><br>
-            3D Model Viewer
+        <div id="camera-controls">
+            <strong>📹 Camera Helper</strong><br><br>
+            
+            <div class="coord-display" id="current-pos">
+                Position: (0, 0, 0)<br>
+                Target: (0, 0, 0)
+            </div>
+            
+            <button class="save-btn" onclick="saveCameraPosition()">💾 Save Current View</button>
+            
+            <div style="margin: 10px 0;"><strong>Quick Presets:</strong></div>
+            <button class="preset-btn" onclick="animateToPosition(5, 5, 5, 0, 0, 0)">Default View</button>
+            <button class="preset-btn" onclick="animateToPosition(8, 2, 0, 0, 0, 0)">Side View</button>
+            <button class="preset-btn" onclick="animateToPosition(0, 8, 0, 0, 0, 0)">Top View</button>
+            <button class="preset-btn" onclick="animateToPosition(3, 3, 8, 0, 0, 0)">Close Front</button>
+            
+            <div style="margin: 10px 0;"><strong>Saved Positions:</strong></div>
+            <div id="saved-positions"></div>
         </div>
     </div>
 
@@ -109,6 +183,7 @@
         let scene, camera, renderer, controls, model;
         let container = document.getElementById('container');
         let loading = document.getElementById('loading');
+        let savedPositions = [];
 
         function init() {
             // Scene setup
@@ -136,6 +211,9 @@
             controls.maxDistance = 20;
             controls.minDistance = 1;
 
+            // Update camera position display when controls change
+            controls.addEventListener('change', updateCameraDisplay);
+
             // Lighting setup
             const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
             scene.add(ambientLight);
@@ -156,6 +234,79 @@
 
             // Handle window resize
             window.addEventListener('resize', onWindowResize, false);
+        }
+
+        function updateCameraDisplay() {
+            const pos = camera.position;
+            const target = controls.target;
+            document.getElementById('current-pos').innerHTML = 
+                `Position: (${pos.x.toFixed(2)}, ${pos.y.toFixed(2)}, ${pos.z.toFixed(2)})<br>` +
+                `Target: (${target.x.toFixed(2)}, ${target.y.toFixed(2)}, ${target.z.toFixed(2)})`;
+        }
+
+        function saveCameraPosition() {
+            const pos = camera.position.clone();
+            const target = controls.target.clone();
+            const name = prompt("Name this camera position:", `View ${savedPositions.length + 1}`);
+            
+            if (name) {
+                savedPositions.push({ name, pos, target });
+                updateSavedPositionsList();
+            }
+        }
+
+        function updateSavedPositionsList() {
+            const container = document.getElementById('saved-positions');
+            container.innerHTML = '';
+            
+            savedPositions.forEach((saved, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'preset-btn';
+                btn.innerHTML = `${saved.name} <small>✕</small>`;
+                btn.onclick = () => animateToPosition(
+                    saved.pos.x, saved.pos.y, saved.pos.z,
+                    saved.target.x, saved.target.y, saved.target.z
+                );
+                
+                // Add delete functionality
+                btn.oncontextmenu = (e) => {
+                    e.preventDefault();
+                    savedPositions.splice(index, 1);
+                    updateSavedPositionsList();
+                };
+                
+                container.appendChild(btn);
+            });
+        }
+
+        function animateToPosition(x, y, z, targetX = 0, targetY = 0, targetZ = 0, duration = 2000) {
+            const startPos = camera.position.clone();
+            const startTarget = controls.target.clone();
+            const endPos = new THREE.Vector3(x, y, z);
+            const endTarget = new THREE.Vector3(targetX, targetY, targetZ);
+            
+            const startTime = Date.now();
+            
+            function animateStep() {
+                const elapsed = Date.now() - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                
+                // Smooth easing function
+                const easeProgress = 1 - Math.pow(1 - progress, 3);
+                
+                // Interpolate position
+                camera.position.lerpVectors(startPos, endPos, easeProgress);
+                controls.target.lerpVectors(startTarget, endTarget, easeProgress);
+                
+                controls.update();
+                updateCameraDisplay();
+                
+                if (progress < 1) {
+                    requestAnimationFrame(animateStep);
+                }
+            }
+            
+            animateStep();
         }
 
         function loadModel() {
@@ -190,8 +341,9 @@
                     
                     scene.add(model);
                     
-                    // Hide loading screen
+                    // Hide loading screen and update camera display
                     loading.style.display = 'none';
+                    updateCameraDisplay();
                     
                     // Start animation loop
                     animate();
@@ -211,10 +363,7 @@
             
             controls.update();
             
-            // Optional: Add subtle rotation to the model
-            if (model) {
-                model.rotation.y += 0.005;
-            }
+            // Removed auto-rotation - model stays still now
             
             renderer.render(scene, camera);
         }
