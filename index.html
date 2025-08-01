@@ -126,8 +126,8 @@
             </div>
             <div class="control-group">
                 <label>Model Scale:</label>
-                <input type="range" id="scaleSlider" min="0.1" max="3" step="0.1" value="1">
-                <span id="scaleValue">1.0</span>
+                <input type="range" id="scaleSlider" min="0.1" max="3" step="0.1" value="1.6">
+                <span id="scaleValue">1.6</span>
             </div>
             <div class="control-group">
                 <label>Auto Rotate:</label>
@@ -144,7 +144,7 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 
     <script>
-        let scene, camera, renderer, controls, model;
+        let scene, camera, renderer, controls, model, mixer, clock;
         let isLoading = true;
         
         // Initialize the 3D scene
@@ -152,6 +152,9 @@
             // Scene setup
             scene = new THREE.Scene();
             scene.background = new THREE.Color(0x222222);
+            
+            // Clock for animations
+            clock = new THREE.Clock();
             
             // Camera setup
             camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -227,10 +230,28 @@
                     model.position.y = -center.y;
                     model.position.z = -center.z;
                     
-                    // Scale to fit in view
+                    // Scale to fit in view and apply your preferred scale
                     const maxDim = Math.max(size.x, size.y, size.z);
-                    const scale = 3 / maxDim;
+                    const scale = (3 / maxDim) * 1.6; // Apply 1.6x scale
                     model.scale.setScalar(scale);
+                    
+                    // Setup animations
+                    if (gltf.animations && gltf.animations.length > 0) {
+                        mixer = new THREE.AnimationMixer(model);
+                        
+                        // Find and play the "Animation" clip
+                        const animationClip = gltf.animations.find(clip => clip.name === "Animation");
+                        if (animationClip) {
+                            const action = mixer.clipAction(animationClip);
+                            action.play();
+                            console.log('Playing animation:', animationClip.name);
+                        } else {
+                            // If "Animation" not found, play the first animation
+                            const action = mixer.clipAction(gltf.animations[0]);
+                            action.play();
+                            console.log('Playing first available animation:', gltf.animations[0].name);
+                        }
+                    }
                     
                     // Enable shadows
                     model.traverse((child) => {
@@ -316,6 +337,13 @@
         function animate() {
             requestAnimationFrame(animate);
             
+            const delta = clock.getDelta();
+            
+            // Update animations
+            if (mixer) {
+                mixer.update(delta);
+            }
+            
             controls.update();
             
             if (!isLoading) {
@@ -377,7 +405,12 @@
             document.getElementById('scaleValue').textContent = scale.toFixed(1);
             
             if (model) {
-                model.scale.setScalar(scale);
+                // Apply the base scale calculation with the slider multiplier
+                const box = new THREE.Box3().setFromObject(model);
+                const size = box.getSize(new THREE.Vector3());
+                const maxDim = Math.max(size.x, size.y, size.z);
+                const baseScale = 3 / maxDim;
+                model.scale.setScalar(baseScale * scale);
             }
         }
         
