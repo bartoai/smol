@@ -80,6 +80,22 @@
             height: auto;
         }
         
+        #branding-cover {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 200px;
+            height: 80px;
+            background: #000;
+            z-index: 102;
+            opacity: 1;
+            transition: opacity 2s ease-in-out;
+        }
+        
+        #branding-cover.fade-out {
+            opacity: 0;
+        }
+        
         #terrarium-container {
             position: relative;
             width: 100vw;
@@ -261,6 +277,9 @@
         <div id="forest-logo">
             <img src="https://cdn.prod.website-files.com/6740d85c4e3daeef29a89470/688c2456e4b0265ec1acb155_maddie-s-world-01-08-2025.png" alt="Maddie's World">
         </div>
+        
+        <!-- Black cover for Spline branding -->
+        <div id="branding-cover"></div>
     </div>
     
     <!-- Terrarium Container -->
@@ -341,15 +360,21 @@
                     forestLogo.classList.add('visible');
                 }
                 
-                // Try to hide Spline branding
+                // Try to hide Spline branding - keeping minimal attempts
                 hideSplineBranding();
             }, 3000);
             
             // Start camera movement and fade out after 7 seconds
             setTimeout(() => {
                 const forestScene = document.getElementById('forest-scene');
+                const brandingCover = document.getElementById('branding-cover');
+                
                 if (forestScene) {
                     forestScene.classList.add('fade-out');
+                }
+                
+                if (brandingCover) {
+                    brandingCover.classList.add('fade-out');
                 }
                 
                 setTimeout(() => {
@@ -813,77 +838,22 @@
         }
         
         function hideSplineBranding() {
-            // Multiple attempts to hide Spline branding
-            const attempts = [
-                () => {
-                    // Try to access shadow DOM
-                    const splineViewer = document.querySelector('spline-viewer');
-                    if (splineViewer && splineViewer.shadowRoot) {
+            // Simple approach since we have the black cover now
+            setTimeout(() => {
+                const splineViewer = document.querySelector('spline-viewer');
+                if (splineViewer && splineViewer.shadowRoot) {
+                    try {
                         const shadowElements = splineViewer.shadowRoot.querySelectorAll('*');
                         shadowElements.forEach(el => {
-                            if (el.textContent && el.textContent.toLowerCase().includes('built') ||
-                                el.textContent && el.textContent.toLowerCase().includes('spline') ||
-                                el.href && el.href.includes('spline.design')) {
-                                el.style.display = 'none';
-                                el.style.opacity = '0';
-                                el.style.visibility = 'hidden';
-                            }
-                        });
-                    }
-                },
-                () => {
-                    // Hide by common class patterns
-                    const selectors = [
-                        '[class*="logo"]',
-                        '[class*="brand"]', 
-                        '[class*="watermark"]',
-                        '[class*="spline"]',
-                        'a[href*="spline"]',
-                        'div[style*="position: absolute"][style*="bottom"]',
-                        'div[style*="position: fixed"][style*="bottom"]'
-                    ];
-                    
-                    selectors.forEach(selector => {
-                        document.querySelectorAll(selector).forEach(el => {
                             if (el.textContent && (el.textContent.includes('Built') || el.textContent.includes('Spline'))) {
-                                el.style.display = 'none !important';
-                                el.remove();
+                                el.style.display = 'none';
                             }
                         });
-                    });
-                },
-                () => {
-                    // Brute force: hide all elements in bottom-right area that might be branding
-                    document.querySelectorAll('*').forEach(el => {
-                        const style = window.getComputedStyle(el);
-                        const rect = el.getBoundingClientRect();
-                        
-                        if (style.position === 'absolute' || style.position === 'fixed') {
-                            if (rect.bottom > window.innerHeight - 100 && rect.right > window.innerWidth - 200) {
-                                if (el.textContent && (el.textContent.includes('Built') || el.textContent.includes('Spline'))) {
-                                    el.style.display = 'none';
-                                    el.remove();
-                                }
-                            }
-                        }
-                    });
+                    } catch (e) {
+                        // Shadow DOM not accessible, but that's okay - we have the cover
+                    }
                 }
-            ];
-            
-            // Run all attempts with delays
-            attempts.forEach((attempt, index) => {
-                setTimeout(attempt, index * 1000);
-            });
-            
-            // Keep trying periodically
-            const interval = setInterval(() => {
-                attempts.forEach(attempt => attempt());
             }, 2000);
-            
-            // Stop trying after forest scene ends
-            setTimeout(() => {
-                clearInterval(interval);
-            }, 7000);
         }
         
         function animate() {
