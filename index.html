@@ -55,51 +55,7 @@
         }
         
         #story-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.9);
-            z-index: 200;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: opacity 1s ease;
-        }
-        
-        #story-content {
-            text-align: center;
-        }
-        
-        #story-text {
-            opacity: 0;
-            animation: fadeIn 2s ease-in-out forwards;
-            margin-bottom: 40px;
-        }
-        
-        #story-text img {
-            max-width: 500px;
-            height: auto;
-        }
-        
-        #enter-btn {
-            background: none;
-            border: none;
-            padding: 0;
-            cursor: pointer;
-            opacity: 0;
-            animation: fadeIn 1s ease-in-out 3s forwards, slowFlash 2s ease-in-out infinite 4s;
-        }
-        
-        #enter-btn img {
-            max-width: 200px;
-            height: auto;
-            transition: transform 0.3s ease;
-        }
-        
-        #enter-btn:hover img {
-            transform: scale(1.05);
+            display: none;
         }
         
         @keyframes fadeIn {
@@ -289,18 +245,7 @@
     </div>
     
     <!-- Terrarium Container -->
-    <div id="terrarium-container">
-        <div id="story-overlay">
-            <div id="story-content">
-                <div id="story-text">
-                    <img src="https://cdn.prod.website-files.com/6740d85c4e3daeef29a89470/688c1772aa2e91cfd29b6302_something-mysterious-awaits-wi-01-08-2025%20(1).png" alt="Something mysterious awaits within">
-                </div>
-                <button id="enter-btn" onclick="enterWorld()">
-                    <img src="https://cdn.prod.website-files.com/6740d85c4e3daeef29a89470/688c1772768889f0fca6befa_-ENTER-01-08-2025.png" alt="Click to Enter">
-                </button>
-            </div>
-        </div>
-        
+    <div id="terrarium-container">        
         <div id="loading">Awakening the terrarium...</div>
         
         <div id="ambient-text">
@@ -372,12 +317,26 @@
             // Start ambient music for the journey
             ambientMusic = new Audio('https://cdn.jsdelivr.net/gh/bartoai/smol@main/fable.mp3');
             ambientMusic.loop = true;
-            ambientMusic.volume = 0.05; // Very quiet during forest walk
+            ambientMusic.volume = 0.05;
             ambientMusic.play().catch(e => console.log('Music autoplay blocked'));
             
-            // Simulate walking through forest for 6 seconds
+            // Get the spline viewer and control camera movement
+            splineViewer = document.querySelector('spline-viewer');
+            
+            if (splineViewer) {
+                // Wait for spline to load then start camera animation
+                splineViewer.addEventListener('load', () => {
+                    startCameraWalk();
+                });
+                
+                // Fallback in case load event doesn't fire
+                setTimeout(() => {
+                    startCameraWalk();
+                }, 1000);
+            }
+            
+            // Fade out forest after 7 seconds and transition to terrarium
             setTimeout(() => {
-                // Fade out forest and transition to terrarium
                 const forestScene = document.getElementById('forest-scene');
                 forestScene.classList.add('fade-out');
                 
@@ -385,7 +344,39 @@
                     forestScene.style.display = 'none';
                     showTerrariumWorld();
                 }, 2000);
-            }, 6000);
+            }, 7000);
+        }
+        
+        function startCameraWalk() {
+            // Try to access spline's camera and animate it
+            if (splineViewer && splineViewer.contentDocument) {
+                try {
+                    // Simulate slow forward movement through the forest
+                    const duration = 7000; // 7 seconds
+                    const startTime = performance.now();
+                    
+                    function animateCamera(currentTime) {
+                        const elapsed = currentTime - startTime;
+                        const progress = Math.min(elapsed / duration, 1);
+                        
+                        // Send camera movement events to spline
+                        const moveEvent = new KeyboardEvent('keydown', {
+                            key: 'w',
+                            code: 'KeyW'
+                        });
+                        
+                        splineViewer.contentDocument.dispatchEvent(moveEvent);
+                        
+                        if (progress < 1) {
+                            setTimeout(() => requestAnimationFrame(animateCamera), 100);
+                        }
+                    }
+                    
+                    requestAnimationFrame(animateCamera);
+                } catch (error) {
+                    console.log('Cannot control spline camera directly');
+                }
+            }
         }
         
         function showTerrariumWorld() {
@@ -396,6 +387,12 @@
             if (ambientMusic) {
                 ambientMusic.volume = 0.1;
             }
+            
+            // Automatically start the 3D terrarium experience
+            setTimeout(() => {
+                document.getElementById('loading').style.display = 'block';
+                init();
+            }, 500);
         }
         
         // Chat functionality
@@ -590,15 +587,8 @@
         }
         
         function enterWorld() {
-            if (worldEntered) return;
-            worldEntered = true;
-            
-            document.getElementById('story-overlay').style.opacity = '0';
-            setTimeout(() => {
-                document.getElementById('story-overlay').style.display = 'none';
-                document.getElementById('loading').style.display = 'block';
-                init();
-            }, 1000);
+            // This function is no longer needed since we auto-transition
+            return;
         }
         
         function init() {
