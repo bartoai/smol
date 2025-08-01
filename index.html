@@ -93,46 +93,48 @@
         
         #ambient-text {
             position: absolute;
-            bottom: 30px;
+            top: 20px;
             left: 50%;
             transform: translateX(-50%);
-            color: rgba(255, 255, 255, 0.6);
-            font-size: 0.9em;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 6px;
             z-index: 100;
             opacity: 0;
             transition: opacity 2s ease;
+            text-align: center;
         }
         
         #chat-interface {
             position: absolute;
-            bottom: 30px;
-            left: 30px;
-            width: 400px;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            width: 100%;
+            height: 200px;
             background: #000;
-            border: 4px solid #fff;
+            border-top: 4px solid #fff;
             border-radius: 0;
             padding: 0;
             z-index: 100;
             opacity: 0;
             transition: opacity 2s ease 3s;
-            box-shadow: 4px 4px 0px #666;
         }
         
         #chat-header {
             background: #444;
             color: #fff;
             padding: 8px 12px;
-            font-size: 10px;
+            font-size: 8px;
             border-bottom: 2px solid #fff;
             text-align: center;
         }
         
         #chat-messages {
-            height: 180px;
+            height: 130px;
             overflow-y: auto;
             padding: 12px;
             background: #000;
-            font-size: 8px;
+            font-size: 7px;
             line-height: 1.6;
             color: #fff;
         }
@@ -169,6 +171,8 @@
             border-top: 2px solid #fff;
             padding: 8px;
             gap: 8px;
+            height: 40px;
+            box-sizing: border-box;
         }
         
         #chat-input {
@@ -178,7 +182,7 @@
             border: 2px solid #666;
             border-radius: 0;
             color: #fff;
-            font-size: 8px;
+            font-size: 7px;
             font-family: 'Press Start 2P', monospace;
             outline: none;
             box-sizing: border-box;
@@ -270,7 +274,7 @@
                     > SYSTEM INITIALIZED<br>
                     > MADDIE OF OAKVALE ONLINE<br><br>
                     Welcome, traveler... I sense your presence beyond the glass.<br><br>
-                    RIDDLE: What grows without soil, thinks without brain, yet connects all living things?
+                    What grows without soil, thinks without brain, yet connects all living things?
                 </div>
             </div>
             <div id="chat-input-container">
@@ -331,7 +335,7 @@
         
         function toggleMic() {
             if (!recognition) {
-                addMessage('> ERROR: Speech recognition not supported', 'user');
+                addMessage('ERROR: Speech recognition not supported', 'user');
                 return;
             }
             
@@ -463,15 +467,24 @@
                 hideTyping();
                 
                 if (data.success) {
-                    addMessage(data.response, 'maddie');
-                    
-                    const typingDuration = data.response.length * 30;
+                    // Wait for audio to be ready before showing text
                     if (data.audioUrl) {
-                        setTimeout(() => {
-                            const audio = new Audio(data.audioUrl);
-                            audio.volume = 0.9; // Increased from 0.7
+                        const audio = new Audio(data.audioUrl);
+                        audio.volume = 0.9;
+                        
+                        // Wait for audio to load, then show text and play audio simultaneously
+                        audio.addEventListener('canplaythrough', () => {
+                            addMessage(data.response, 'maddie');
                             audio.play().catch(e => console.log('Audio playback failed:', e));
-                        }, typingDuration + 200);
+                        });
+                        
+                        audio.addEventListener('error', () => {
+                            // If audio fails, still show the text
+                            addMessage(data.response, 'maddie');
+                        });
+                    } else {
+                        // No audio, just show text
+                        addMessage(data.response, 'maddie');
                     }
                 } else {
                     addMessage('CONNECTION ERROR: Digital streams tangled', 'maddie');
@@ -489,10 +502,10 @@
             if (worldEntered) return;
             worldEntered = true;
             
-            // Start ambient music
+            // Start ambient music at very low volume
             ambientMusic = new Audio('https://cdn.jsdelivr.net/gh/bartoai/smol@main/fable.mp3');
             ambientMusic.loop = true;
-            ambientMusic.volume = 0.3; // Reduced from 0.6
+            ambientMusic.volume = 0.1;
             ambientMusic.play().catch(e => console.log('Music autoplay blocked'));
             
             document.getElementById('story-overlay').style.opacity = '0';
