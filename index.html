@@ -203,7 +203,13 @@
         
         function loadModel() {
             const loader = new THREE.GLTFLoader();
-            const modelUrl = 'https://github.com/bartoai/smol/raw/main/smol_ame_in_an_upcycled_terrarium_hololiveen.glb';
+            
+            // Option 1: Use jsdelivr CDN (recommended)
+            const modelUrl = 'https://cdn.jsdelivr.net/gh/bartoai/smol@main/smol_ame_in_an_upcycled_terrarium_hololiveen.glb';
+            
+            // Option 2: Alternative CDNs (uncomment to try)
+            // const modelUrl = 'https://gitcdn.xyz/repo/bartoai/smol/main/smol_ame_in_an_upcycled_terrarium_hololiveen.glb';
+            // const modelUrl = 'https://rawcdn.githack.com/bartoai/smol/main/smol_ame_in_an_upcycled_terrarium_hololiveen.glb';
             
             loader.load(
                 modelUrl,
