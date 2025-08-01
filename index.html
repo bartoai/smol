@@ -42,11 +42,6 @@
             height: 100%;
         }
         
-        /* Hide Spline branding */
-        spline-viewer::part(default-ui) {
-            display: none !important;
-        }
-        
         #forest-logo {
             position: absolute;
             top: 50%;
@@ -72,27 +67,11 @@
             height: 100vh;
             opacity: 0;
             transition: opacity 2s ease-in-out;
+            background: radial-gradient(circle at center, #2a2a3e 0%, #1e1e2e 50%, #181828 70%, #0a0a0f 100%);
         }
         
         #terrarium-container.visible {
             opacity: 1;
-        }
-        
-        #story-overlay {
-            display: none;
-        }
-        
-        @keyframes fadeIn {
-            to { opacity: 1; }
-        }
-        
-        @keyframes slowFlash {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
-        }
-        
-        #loading {
-            display: none;
         }
         
         #ambient-text {
@@ -288,10 +267,6 @@
         </div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-
     <script>
         let scene, camera, renderer, controls, model, mixer, clock, ambientMusic;
         let isLoading = false;
@@ -309,13 +284,11 @@
         function startMusicOnClick() {
             if (!musicStarted) {
                 musicStarted = true;
-                // Start ambient music for the journey
                 ambientMusic = new Audio('https://cdn.jsdelivr.net/gh/bartoai/smol@main/fable.mp3');
                 ambientMusic.loop = true;
                 ambientMusic.volume = 0.05;
                 ambientMusic.play().catch(e => console.log('Music autoplay blocked'));
                 
-                // Remove the click listener after first click
                 document.removeEventListener('click', startMusicOnClick);
             }
         }
@@ -323,8 +296,10 @@
         // Custom cursor
         document.addEventListener('mousemove', (e) => {
             const cursor = document.getElementById('cursor');
-            cursor.style.left = e.clientX - 10 + 'px';
-            cursor.style.top = e.clientY - 10 + 'px';
+            if (cursor) {
+                cursor.style.left = e.clientX - 10 + 'px';
+                cursor.style.top = e.clientY - 10 + 'px';
+            }
         });
         
         // Start the forest journey when page loads
@@ -343,136 +318,50 @@
             // Fade in the logo after forest appears
             setTimeout(() => {
                 const forestLogo = document.getElementById('forest-logo');
-                forestLogo.classList.add('visible');
+                if (forestLogo) {
+                    forestLogo.classList.add('visible');
+                }
             }, 3000);
             
-            // Wait for scene to load, then start camera movement
-            setTimeout(() => {
-                splineViewer = document.querySelector('spline-viewer');
-                if (splineViewer) {
-                    // Try to hide Spline UI elements
-                    hidSplineBranding();
-                    // Start moving through the forest
-                    animateForestWalk();
-                }
-            }, 4000);
-        }
-        
-        function hidSplineBranding() {
-            // Try multiple methods to hide Spline branding
-            setTimeout(() => {
-                try {
-                    // Hide via shadow DOM if accessible
-                    const splineElements = document.querySelectorAll('spline-viewer');
-                    splineElements.forEach(viewer => {
-                        if (viewer.shadowRoot) {
-                            const brandingElements = viewer.shadowRoot.querySelectorAll('[class*="logo"], [class*="brand"], [class*="spline"]');
-                            brandingElements.forEach(el => el.style.display = 'none');
-                        }
-                    });
-                    
-                    // Hide via CSS if elements are in normal DOM
-                    const brandingSelectors = [
-                        '[class*="spline"]',
-                        '[class*="logo"]', 
-                        '[class*="brand"]',
-                        'a[href*="spline"]'
-                    ];
-                    
-                    brandingSelectors.forEach(selector => {
-                        const elements = document.querySelectorAll(selector);
-                        elements.forEach(el => {
-                            if (el.textContent.toLowerCase().includes('spline') || 
-                                el.textContent.toLowerCase().includes('built')) {
-                                el.style.display = 'none';
-                            }
-                        });
-                    });
-                } catch (error) {
-                    console.log('Could not hide Spline branding');
-                }
-            }, 2000);
-        }
-        
-        function animateForestWalk() {
-            // Get the spline viewer and control camera movement
-            splineViewer = document.querySelector('spline-viewer');
-            
-            if (splineViewer) {
-                // Wait for spline to load then start camera animation
-                splineViewer.addEventListener('load', () => {
-                    startCameraWalk();
-                });
-                
-                // Fallback in case load event doesn't fire
-                setTimeout(() => {
-                    startCameraWalk();
-                }, 1000);
-            }
-            
-            // Fade out forest after 7 seconds and transition to terrarium
+            // Start camera movement and fade out after 7 seconds
             setTimeout(() => {
                 const forestScene = document.getElementById('forest-scene');
-                forestScene.classList.add('fade-out');
+                if (forestScene) {
+                    forestScene.classList.add('fade-out');
+                }
                 
                 setTimeout(() => {
-                    forestScene.style.display = 'none';
+                    if (forestScene) {
+                        forestScene.style.display = 'none';
+                    }
                     showTerrariumWorld();
                 }, 2000);
             }, 7000);
         }
         
-        function startCameraWalk() {
-            // Try to access spline's camera and animate it
-            if (splineViewer && splineViewer.contentDocument) {
-                try {
-                    // Simulate slow forward movement through the forest
-                    const duration = 7000; // 7 seconds
-                    const startTime = performance.now();
-                    
-                    function animateCamera(currentTime) {
-                        const elapsed = currentTime - startTime;
-                        const progress = Math.min(elapsed / duration, 1);
-                        
-                        // Send camera movement events to spline
-                        const moveEvent = new KeyboardEvent('keydown', {
-                            key: 'w',
-                            code: 'KeyW'
-                        });
-                        
-                        splineViewer.contentDocument.dispatchEvent(moveEvent);
-                        
-                        if (progress < 1) {
-                            setTimeout(() => requestAnimationFrame(animateCamera), 100);
-                        }
-                    }
-                    
-                    requestAnimationFrame(animateCamera);
-                } catch (error) {
-                    console.log('Cannot control spline camera directly');
-                }
-            }
-        }
-        
         function showTerrariumWorld() {
             const terrariumContainer = document.getElementById('terrarium-container');
-            terrariumContainer.classList.add('visible');
+            if (terrariumContainer) {
+                terrariumContainer.classList.add('visible');
+            }
             
             // Increase music volume slightly for terrarium world if music is playing
             if (ambientMusic && musicStarted) {
                 ambientMusic.volume = 0.1;
             }
             
-            // Automatically start the 3D terrarium experience
+            // Start the 3D terrarium experience after a delay
             setTimeout(() => {
                 init();
-            }, 500);
+            }, 1000);
         }
         
         // Chat functionality
         document.addEventListener('DOMContentLoaded', () => {
             const chatInput = document.getElementById('chat-input');
-            chatInput.addEventListener('keypress', handleChatInput);
+            if (chatInput) {
+                chatInput.addEventListener('keypress', handleChatInput);
+            }
             
             // Initialize speech recognition
             if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
@@ -484,7 +373,10 @@
                 
                 recognition.onresult = function(event) {
                     const transcript = event.results[0][0].transcript;
-                    document.getElementById('chat-input').value = transcript;
+                    const chatInput = document.getElementById('chat-input');
+                    if (chatInput) {
+                        chatInput.value = transcript;
+                    }
                     stopRecording();
                 };
                 
@@ -516,9 +408,17 @@
             if (isRecording) return;
             
             isRecording = true;
-            document.getElementById('mic-button').classList.add('recording');
-            document.getElementById('mic-button').textContent = '⏹️';
-            document.getElementById('chat-input').placeholder = '> LISTENING...';
+            const micButton = document.getElementById('mic-button');
+            const chatInput = document.getElementById('chat-input');
+            
+            if (micButton) {
+                micButton.classList.add('recording');
+                micButton.textContent = '⏹️';
+            }
+            
+            if (chatInput) {
+                chatInput.placeholder = '> LISTENING...';
+            }
             
             try {
                 recognition.start();
@@ -532,9 +432,17 @@
             if (!isRecording) return;
             
             isRecording = false;
-            document.getElementById('mic-button').classList.remove('recording');
-            document.getElementById('mic-button').textContent = '🎤';
-            document.getElementById('chat-input').placeholder = '> TYPE MESSAGE...';
+            const micButton = document.getElementById('mic-button');
+            const chatInput = document.getElementById('chat-input');
+            
+            if (micButton) {
+                micButton.classList.remove('recording');
+                micButton.textContent = '🎤';
+            }
+            
+            if (chatInput) {
+                chatInput.placeholder = '> TYPE MESSAGE...';
+            }
             
             try {
                 recognition.stop();
@@ -556,6 +464,11 @@
         
         function typeText(text, element, speed = 30) {
             return new Promise((resolve) => {
+                if (!element) {
+                    resolve();
+                    return;
+                }
+                
                 element.innerHTML = '';
                 element.classList.add('typing-text');
                 let i = 0;
@@ -580,6 +493,8 @@
         
         function addMessage(text, sender) {
             const messagesContainer = document.getElementById('chat-messages');
+            if (!messagesContainer) return;
+            
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${sender}-message`;
             
@@ -596,6 +511,8 @@
         
         function showTyping() {
             const messagesContainer = document.getElementById('chat-messages');
+            if (!messagesContainer) return;
+            
             const typingDiv = document.createElement('div');
             typingDiv.className = 'message maddie-message typing-indicator';
             typingDiv.textContent = '> PROCESSING INPUT...';
@@ -660,14 +577,37 @@
             isTyping = false;
         }
         
-        function enterWorld() {
-            // This function is no longer needed since we auto-transition
-            return;
-        }
-        
         function init() {
+            if (isLoading) return;
             isLoading = true;
             
+            // Import Three.js only when needed to avoid conflicts
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
+            script.onload = () => {
+                // Load additional Three.js modules
+                loadThreeJSModules();
+            };
+            document.head.appendChild(script);
+        }
+        
+        function loadThreeJSModules() {
+            // Load GLTFLoader
+            const gltfScript = document.createElement('script');
+            gltfScript.src = 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js';
+            gltfScript.onload = () => {
+                // Load OrbitControls
+                const controlsScript = document.createElement('script');
+                controlsScript.src = 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js';
+                controlsScript.onload = () => {
+                    initThreeJS();
+                };
+                document.head.appendChild(controlsScript);
+            };
+            document.head.appendChild(gltfScript);
+        }
+        
+        function initThreeJS() {
             // Scene setup
             scene = new THREE.Scene();
             
@@ -705,7 +645,11 @@
             renderer.toneMapping = THREE.ACESFilmicToneMapping;
             renderer.toneMappingExposure = 1.2;
             renderer.physicallyCorrectLights = true;
-            document.getElementById('terrarium-container').appendChild(renderer.domElement);
+            
+            const terrariumContainer = document.getElementById('terrarium-container');
+            if (terrariumContainer) {
+                terrariumContainer.appendChild(renderer.domElement);
+            }
             
             // Controls setup
             controls = new THREE.OrbitControls(camera, renderer.domElement);
@@ -793,11 +737,10 @@
                     }, 1000);
                 },
                 function(progress) {
-                    // Silent loading - no progress text
+                    // Silent loading
                 },
                 function(error) {
                     console.error('Error loading model:', error);
-                    // Silent error handling
                 }
             );
         }
@@ -836,8 +779,11 @@
                     requestAnimationFrame(swoopStep);
                 } else {
                     controls.enabled = true;
-                    document.getElementById('ambient-text').style.opacity = '1';
-                    document.getElementById('chat-interface').style.opacity = '1';
+                    const ambientText = document.getElementById('ambient-text');
+                    const chatInterface = document.getElementById('chat-interface');
+                    
+                    if (ambientText) ambientText.style.opacity = '1';
+                    if (chatInterface) chatInterface.style.opacity = '1';
                 }
             }
             
@@ -853,14 +799,21 @@
                 mixer.update(delta);
             }
             
-            controls.update();
-            renderer.render(scene, camera);
+            if (controls) {
+                controls.update();
+            }
+            
+            if (renderer && scene && camera) {
+                renderer.render(scene, camera);
+            }
         }
         
         function onWindowResize() {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
+            if (camera && renderer) {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            }
         }
     </script>
 </body>
