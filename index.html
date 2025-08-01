@@ -29,7 +29,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.7);
+            background: rgba(0, 0, 0, 0.9);
             z-index: 200;
             display: flex;
             align-items: center;
@@ -38,29 +38,29 @@
         }
         
         #story-content {
-            max-width: 600px;
             text-align: center;
             color: #e8e8e8;
-            padding: 40px;
-            background: rgba(0, 0, 0, 0.8);
-            border-radius: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(20px);
         }
         
-        #story-content h1 {
-            font-size: 2.5em;
-            margin-bottom: 20px;
+        #story-text {
+            font-size: 1.8em;
+            font-weight: 400;
             color: #d4af37;
             text-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
-            font-weight: 600;
+            margin-bottom: 40px;
         }
         
-        #story-content p {
-            font-size: 1.2em;
-            line-height: 1.6;
-            margin-bottom: 30px;
-            font-style: italic;
+        .word {
+            opacity: 0;
+            display: inline-block;
+            margin-right: 0.3em;
+            animation: fadeInWord 0.8s ease-in-out forwards;
+        }
+        
+        @keyframes fadeInWord {
+            to {
+                opacity: 1;
+            }
         }
         
         #enter-btn {
@@ -74,6 +74,14 @@
             cursor: pointer;
             transition: all 0.3s ease;
             box-shadow: 0 5px 15px rgba(212, 175, 55, 0.3);
+            opacity: 0;
+            animation: fadeInButton 0.8s ease-in-out 3s forwards;
+        }
+        
+        @keyframes fadeInButton {
+            to {
+                opacity: 1;
+            }
         }
         
         #enter-btn:hover {
@@ -92,53 +100,6 @@
             z-index: 100;
             opacity: 0;
             transition: opacity 2s ease;
-        }
-        
-        #controls {
-            position: absolute;
-            bottom: 30px;
-            right: 30px;
-            background: rgba(0, 0, 0, 0.6);
-            color: #d4af37;
-            padding: 15px 20px;
-            border-radius: 10px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(212, 175, 55, 0.2);
-            z-index: 100;
-            opacity: 0;
-            transition: opacity 2s ease 3s;
-        }
-        
-        .control-group {
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .control-group:last-child {
-            margin-bottom: 0;
-        }
-        
-        .control-group label {
-            font-size: 0.9em;
-            color: #ccc;
-            min-width: 80px;
-        }
-        
-        .control-group input[type="range"] {
-            flex: 1;
-            accent-color: #d4af37;
-        }
-        
-        .control-group input[type="checkbox"] {
-            accent-color: #d4af37;
-        }
-        
-        #scaleValue {
-            color: #d4af37;
-            font-weight: 600;
-            min-width: 30px;
         }
         
         #loading {
@@ -176,11 +137,8 @@
     <div id="container">
         <div id="story-overlay">
             <div id="story-content">
-                <h1>The Forgotten Terrarium</h1>
-                <p>In the dusty corner of an abandoned greenhouse, you discover something extraordinary...</p>
-                <p>A miniature world, perfectly preserved, where time seems to stand still. But as you lean closer, you notice something moving within the glass walls.</p>
-                <p>What secrets lie hidden in this tiny ecosystem?</p>
-                <button id="enter-btn" onclick="enterWorld()">Enter the Mystery</button>
+                <div id="story-text">Something mysterious awaits within</div>
+                <button id="enter-btn" onclick="enterWorld()">Enter</button>
             </div>
         </div>
         
@@ -189,18 +147,6 @@
         <div id="ambient-text">
             "Some worlds are too small to see, yet vast enough to lose yourself in..."
         </div>
-        
-        <div id="controls">
-            <div class="control-group">
-                <label>Scale:</label>
-                <input type="range" id="scaleSlider" min="0.1" max="3" step="0.1" value="1.6">
-                <span id="scaleValue">1.6</span>
-            </div>
-            <div class="control-group">
-                <label>Auto Orbit:</label>
-                <input type="checkbox" id="autoRotate">
-            </div>
-        </div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -208,9 +154,25 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 
     <script>
-        let scene, camera, renderer, controls, model, mixer, clock;
+        let scene, camera, renderer, controls, model, mixer, clock, ambientMusic;
         let isLoading = false;
         let worldEntered = false;
+        
+        // Animate text words on page load
+        window.addEventListener('load', () => {
+            const text = "Something mysterious awaits within";
+            const words = text.split(' ');
+            const storyTextElement = document.getElementById('story-text');
+            storyTextElement.innerHTML = '';
+            
+            words.forEach((word, index) => {
+                const span = document.createElement('span');
+                span.textContent = word;
+                span.className = 'word';
+                span.style.animationDelay = `${index * 0.3}s`;
+                storyTextElement.appendChild(span);
+            });
+        });
         
         // Custom cursor
         document.addEventListener('mousemove', (e) => {
@@ -222,6 +184,12 @@
         function enterWorld() {
             if (worldEntered) return;
             worldEntered = true;
+            
+            // Start ambient music
+            ambientMusic = new Audio('https://cdn.jsdelivr.net/gh/bartoai/smol@main/fable.mp3');
+            ambientMusic.loop = true;
+            ambientMusic.volume = 0.6;
+            ambientMusic.play().catch(e => console.log('Music autoplay blocked'));
             
             document.getElementById('story-overlay').style.opacity = '0';
             setTimeout(() => {
@@ -285,13 +253,13 @@
             controls.minDistance = 1;
             controls.maxDistance = 15;
             
-            // Mysterious lighting setup
-            const ambientLight = new THREE.AmbientLight(0x404080, 0.3);
+            // Improved lighting setup - more natural
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
             scene.add(ambientLight);
             
-            // Main mystical light with golden hue
-            const mainLight = new THREE.DirectionalLight(0xd4af37, 1.0);
-            mainLight.position.set(8, 12, 6);
+            // Main light - warmer and softer
+            const mainLight = new THREE.DirectionalLight(0xffffff, 1.2);
+            mainLight.position.set(10, 15, 8);
             mainLight.castShadow = true;
             mainLight.shadow.mapSize.width = 4096;
             mainLight.shadow.mapSize.height = 4096;
@@ -304,14 +272,9 @@
             mainLight.shadow.bias = -0.0001;
             scene.add(mainLight);
             
-            // Rim light with mystical blue
-            const rimLight = new THREE.DirectionalLight(0x6666ff, 0.4);
-            rimLight.position.set(-8, 5, -8);
-            scene.add(rimLight);
-            
             // Subtle fill light
-            const fillLight = new THREE.DirectionalLight(0xffffff, 0.1);
-            fillLight.position.set(0, -5, 5);
+            const fillLight = new THREE.DirectionalLight(0x87ceeb, 0.3);
+            fillLight.position.set(-8, 5, -8);
             scene.add(fillLight);
             
             // Load the terrarium
@@ -319,8 +282,6 @@
             
             // Event listeners
             window.addEventListener('resize', onWindowResize);
-            document.getElementById('scaleSlider').addEventListener('input', updateScale);
-            document.getElementById('autoRotate').addEventListener('change', toggleAutoRotate);
             
             // Start render loop
             animate();
@@ -367,17 +328,11 @@
                         }
                     }
                     
-                    // Enable shadows with mysterious enhancement
+                    // Enable shadows
                     model.traverse((child) => {
                         if (child.isMesh) {
                             child.castShadow = true;
                             child.receiveShadow = true;
-                            
-                            // Add subtle glow to materials
-                            if (child.material) {
-                                child.material.emissive = new THREE.Color(0x001122);
-                                child.material.emissiveIntensity = 0.05;
-                            }
                         }
                     });
                     
@@ -443,7 +398,6 @@
                     // Reveal complete
                     controls.enabled = true;
                     document.getElementById('ambient-text').style.opacity = '1';
-                    document.getElementById('controls').style.opacity = '1';
                     console.log('The terrarium reveals its secrets...');
                 }
             }
@@ -464,24 +418,6 @@
             controls.update();
             
             renderer.render(scene, camera);
-        }
-        
-        function updateScale() {
-            const scale = parseFloat(document.getElementById('scaleSlider').value);
-            document.getElementById('scaleValue').textContent = scale.toFixed(1);
-            
-            if (model) {
-                const box = new THREE.Box3().setFromObject(model);
-                const size = box.getSize(new THREE.Vector3());
-                const maxDim = Math.max(size.x, size.y, size.z);
-                const baseScale = 3 / maxDim;
-                model.scale.setScalar(baseScale * scale);
-            }
-        }
-        
-        function toggleAutoRotate() {
-            controls.autoRotate = document.getElementById('autoRotate').checked;
-            controls.autoRotateSpeed = 1.0; // Slower, more contemplative
         }
         
         function onWindowResize() {
