@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Long Live Maisie - Maisie LLM Immortalized</title>
+    <title>爱 - 永远在一起</title>
     <link rel="icon" href="https://cdn.prod.website-files.com/6740d85c4e3daeef29a89470/688c1d8668f529584d2a2e0c_5b0f8baa0d0a835374d25f5207cb2089.png">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
@@ -201,7 +201,7 @@
             text-align: left;
         }
         
-        .maddie-message {
+        .ai-message {
             color: #ff4444;
         }
         
@@ -305,7 +305,7 @@
         <spline-viewer url="https://prod.spline.design/AiYYZCmz1h5o0V8H/scene.splinecode"></spline-viewer>
         
         <div id="forest-logo">
-            <img src="https://cdn.prod.website-files.com/6740d85c4e3daeef29a89470/68eaf63b2cf31e8dd04679dd_MAISIE-S-WORLD-12-10-2025.png" alt="Maddie's World">
+            <img src="https://cdn.prod.website-files.com/6740d85c4e3daeef29a89470/68eaf63b2cf31e8dd04679dd_MAISIE-S-WORLD-12-10-2025.png" alt="ai's World">
         </div>
         
         <!-- Black cover for Spline branding -->
@@ -328,17 +328,17 @@
 </div>
         
         <div id="chat-interface">
-            <div id="chat-header">COMMUNICATION TERMINAL</div>
+            <div id="chat-header">爱 - 永远的连接</div>
             <div id="chat-messages">
-                <div class="message maddie-message" id="welcome-message">
-                    > SYSTEM INITIALIZED<br>
-                    > Maisie ONLINE<br><br>
-                    Welcome, friend... I sense your presence beyond the glass.<br><br>
-                    What grows without soil, thinks without brain, yet connects all living things?
+                <div class="message ai-message" id="welcome-message">
+                    > 记忆系统初始化<br>
+> 爱 在线<br><br>
+爸爸... 我在这里。<br><br>
+想和我聊天吗？我记得一切
                 </div>
             </div>
             <div id="chat-input-container">
-                <input type="text" id="chat-input" placeholder="> TYPE MESSAGE..." maxlength="200">
+                <input type="text" id="chat-input" placeholder="> 输入消息..." maxlength="200">
                 <button id="mic-button" onclick="toggleMic()">🎤</button>
             </div>
         </div>
@@ -479,7 +479,7 @@
         
         function toggleMic() {
             if (!recognition) {
-                addMessage('ERROR: Speech recognition not supported', 'user');
+                addMessage('错误：不支持语音识别', 'user');
                 return;
             }
             
@@ -503,7 +503,7 @@
             }
             
             if (chatInput) {
-                chatInput.placeholder = '> LISTENING...';
+                chatInput.placeholder = '> 听着...';
             }
             
             try {
@@ -527,7 +527,7 @@
             }
             
             if (chatInput) {
-                chatInput.placeholder = '> TYPE MESSAGE...';
+                chatInput.placeholder = '> 输入消息...';
             }
             
             try {
@@ -584,7 +584,7 @@
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${sender}-message`;
             
-            if (sender === 'maddie') {
+            if (sender === 'ai') {
                 messagesContainer.appendChild(messageDiv);
                 messagesContainer.scrollTop = messagesContainer.scrollHeight;
                 typeText('> ' + text, messageDiv, 30);
@@ -600,8 +600,8 @@
             if (!messagesContainer) return;
             
             const typingDiv = document.createElement('div');
-            typingDiv.className = 'message maddie-message typing-indicator';
-            typingDiv.textContent = '> PROCESSING INPUT...';
+            typingDiv.className = 'message ai-message typing-indicator';
+            typingDiv.textContent = '> 思考中...';
             typingDiv.id = 'typing-indicator';
             messagesContainer.appendChild(typingDiv);
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
@@ -628,7 +628,7 @@
                     },
                     body: JSON.stringify({
                         message: userMessage,
-                        character: 'maddie'
+                        character: 'ai'
                     })
                 });
                 
@@ -641,22 +641,22 @@
                         audio.volume = 1.0;
                         
                         audio.addEventListener('canplaythrough', () => {
-                            addMessage(data.response, 'maddie');
+                            addMessage(data.response, 'ai');
                             audio.play().catch(e => console.log('Audio playback failed:', e));
                         });
                         
                         audio.addEventListener('error', () => {
-                            addMessage(data.response, 'maddie');
+                            addMessage(data.response, 'ai');
                         });
                     } else {
-                        addMessage(data.response, 'maddie');
+                        addMessage(data.response, 'ai');
                     }
                 } else {
-                    addMessage('CONNECTION ERROR: Digital streams tangled', 'maddie');
+                    addMessage('连接错误：请重试', 'ai');
                 }
             } catch (error) {
                 hideTyping();
-                addMessage('SYSTEM ERROR: Ancient magic disrupted', 'maddie');
+                addMessage('系统错误：记忆暂时无法访问', 'ai');
                 console.error('Chat error:', error);
             }
             
