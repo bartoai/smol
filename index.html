@@ -121,6 +121,36 @@
             transition: opacity 2s ease;
             text-align: center;
         }
+
+        #social-buttons {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    display: flex;
+    gap: 15px;
+    z-index: 100;
+    opacity: 0;
+    transition: opacity 2s ease 3s;
+}
+
+.social-button {
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+    opacity: 0.8;
+}
+
+.social-button:hover {
+    transform: scale(1.1);
+    opacity: 1;
+}
+
+.social-button img {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
         
         #chat-interface {
             position: absolute;
@@ -285,8 +315,17 @@
     <!-- Terrarium Container -->
     <div id="terrarium-container">        
         <div id="ambient-text">
-            @MaisieLLM ca: Dwxf5BdptQFHXrK4zA8A5mK53xrpaApBVqX4VnZZpump
+            @MaisieLLM: 
         </div>
+
+        <div id="social-buttons">
+    <a href="https://x.com" target="_blank" class="social-button">
+        <img src="https://cdn.prod.website-files.com/6740d85c4e3daeef29a89470/68d5c1872568958fd78018bb_twitter.png" alt="X">
+    </a>
+    <a href="https://four.meme" target="_blank" class="social-button">
+        <img src="https://cdn.prod.website-files.com/6740d85c4e3daeef29a89470/68eef59562193262918fc060_68d5c1872568958fd78018bb_twitter%20(1).png" alt="Four.meme">
+    </a>
+</div>
         
         <div id="chat-interface">
             <div id="chat-header">COMMUNICATION TERMINAL</div>
@@ -829,8 +868,11 @@
                     const ambientText = document.getElementById('ambient-text');
                     const chatInterface = document.getElementById('chat-interface');
                     
-                    if (ambientText) ambientText.style.opacity = '1';
-                    if (chatInterface) chatInterface.style.opacity = '1';
+                    const socialButtons = document.getElementById('social-buttons');
+
+if (ambientText) ambientText.style.opacity = '1';
+if (chatInterface) chatInterface.style.opacity = '1';
+if (socialButtons) socialButtons.style.opacity = '1';
                 }
             }
             
